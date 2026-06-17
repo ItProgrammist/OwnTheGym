@@ -99,3 +99,21 @@ $color-blue-hover: #1d4ed8;
     svg { width: 100%; height: 100%; }
   }
 }
+.exercise-row__action-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+
+  &:active {
+    transform: scale(0.9); // Легкий эффект нажатия
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}

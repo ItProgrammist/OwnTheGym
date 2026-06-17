@@ -5,6 +5,7 @@ import { MainPage } from './MainPage';
 import { Workouts } from './workouts/Workouts'
 import { SingleWorkoutPage } from './workouts/SingleWorkoutPage'
 import { SingleWorkoutEditAddPage } from './workouts/SingleWorkoutEditAddPage';
+import { ActiveWorkoutPage } from './workouts/ActiveWorkoutPage';
 
 // import './index.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -19,7 +20,9 @@ const routes: RouteObject[] = [
   { path: "/", element: <MainPage />, errorElement: <div>404</div> },
   { path: "/workouts", element: <Workouts />, errorElement: <div>404</div> },
   { path: "/workouts/:workoutId", element: <SingleWorkoutPage />, errorElement: <div>404</div>  },
-  { path: "/workouts/:workoutId/edit", element: <SingleWorkoutEditAddPage />, errorElement: <div>404</div>  }
+  { path: "/workouts/:workoutId/edit", element: <SingleWorkoutEditAddPage />, errorElement: <div>404</div>  },
+  { path: "/workouts/:workoutId/active", element: <ActiveWorkoutPage /> }
+
 
 ];
 
