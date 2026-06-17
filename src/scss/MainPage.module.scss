@@ -1,0 +1,268 @@
+// ==========================================================================
+// Переменные (Цветовая палитра макета)
+// ==========================================================================
+$bg-main: #242424;       // Основной темный фон страницы
+$bg-card-alt: #4a4a4a;   // Фон плашки календаря
+$bg-card: #3a3a3a;       // Фон карточек тренировок и нижнего бара
+$text-white: #ffffff;
+$text-muted: #9ca3af;     // Серый цвет для дней недели и описаний
+$text-dark-muted: #94a3b8;
+$border-color: rgba(55, 65, 81, 0.3);
+
+// Акцентные цвета
+$color-blue: #3b82f6;
+$color-cyan: #22d3ee;
+$color-blue-dark: #2563eb;
+$color-blue-light: #60a5fa;
+
+// Сложность тренировок
+$diff-medium: #eab308;   // Желтый
+$diff-hard: #ef4444;     // Красный
+$diff-insane: #a855f7;   // Пурпурный
+
+// ==========================================================================
+// Основные стили
+// ==========================================================================
+.main-page {
+  min-height: 100vh;
+  background-color: $bg-main;
+  color: $text-white;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+
+  // Контентная часть
+  &__content {
+    width: 100%;
+    max-w: 896px; // 4xl
+    margin: 0 auto;
+    padding: 2rem 1.5rem 7rem 1.5rem; // Предусмотрен отступ снизу под таб-бар
+  }
+
+  // Логотип OWNTHEGYM
+  &__header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+
+      span {
+        color: $color-blue;
+      }
+    }
+  }
+
+  // Навигационная строка над календарем
+  &__section-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.25rem;
+    margin-bottom: 1rem;
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: e1e7ef;
+    }
+
+    button {
+      background: none;
+      border: none;
+      color: $color-blue;
+      font-size: 1.125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// Компонент: Календарь (History)
+// ==========================================================================
+.calendar-card {
+  background-color: $bg-card-alt;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  &__grid {
+    display: grid;
+    grid-template-cols: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  &__day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    &-name {
+      color: $text-muted;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    &-value {
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      span {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #e2e8f0;
+      }
+
+      svg {
+        width: 1.75rem;
+        height: 1.75rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// Компонент: Сетка и карточки тренировок
+// ==========================================================================
+.workout-grid {
+  display: grid;
+  grid-template-cols: repeat(1, minmax(0, 1fr));
+  gap: 1.5rem;
+
+  // Адаптив под ПК: при разрешении от 768px сетка бьется на 3 колонки
+  @media (min-width: 768px) {
+    grid-template-cols: repeat(3, minmax(0, 1fr));
+  }
+
+  
+}
+
+.workout-card {
+  background-color: $bg-card;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid $border-color;
+  transition: transform 0.2rem ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    cursor: pointer;
+  }
+
+  &__image-wrapper {
+    height: 9rem;
+    overflow: hidden;
+    position: relative;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(1) brightness(0.7); // Эффект сурового ЧБ стиля из макета
+    }
+  }
+
+  &__info {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.025em;
+      color: #f3f4f6;
+    }
+  }
+
+  &__difficulty {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #d1d5db;
+
+    // Специфичные цвета уровней сложности
+    &--medium { color: $diff-medium; }
+    &--hard   { color: $diff-hard; }
+    &--insane { color: $diff-insane; }
+  }
+
+  &__description {
+    color: $text-muted;
+    font-size: 11px;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+}
+
+// ==========================================================================
+// Компонент: Нижний таб-бар навигации
+// ==========================================================================
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: $bg-card;
+  border-top: 1px solid rgba(31, 41, 55, 0.8);
+  padding: 0.875rem 0rem;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+
+  &__container {
+    max-width: 448px; // md
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__button {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.1s ease;
+
+    &:active {
+      transform: scale(0.9);
+    }
+
+    svg {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+
+    // Персонализированные цвета кнопок в зависимости от их роли
+    &--dumbbell { color: $color-blue; }
+    &--todo     { color: $color-cyan; }
+    &--trophy   { color: $color-blue-dark; }
+    &--trends   { color: $color-blue-light; }
+  }
+}

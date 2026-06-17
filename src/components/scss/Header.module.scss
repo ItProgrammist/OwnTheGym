@@ -1,0 +1,28 @@
+.header-link {
+  text-decoration: none; // Убирает подчеркивание ссылки
+  color: inherit;        // Заставляет текст сохранять белый цвет приложения
+  display: block;        // Растягивает область клика по ширине хедера
+  
+  &:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+// Ваши существующие стили хедера (пример)
+.main-page__header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  
+  h1 {
+    margin-top: 20px;
+    font-size: 1.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    
+    span {
+      color: #3b82f6; // Тот самый синий акцент для THEGYM
+    }
+  }
+}
