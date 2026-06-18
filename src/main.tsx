@@ -6,6 +6,11 @@ import { Workouts } from './workouts/Workouts'
 import { SingleWorkoutPage } from './workouts/SingleWorkoutPage'
 import { SingleWorkoutEditAddPage } from './workouts/SingleWorkoutEditAddPage';
 import { ActiveWorkoutPage } from './workouts/ActiveWorkoutPage';
+import { ExercisesPage } from './exercises/ExercisesPage';
+import { StatisticsPage } from './statistics/StatisticsPage';
+import { ChallengesPage } from './challenges/ChallengesPage';
+import { SingleChallengePage } from './challenges/SingleChallengePage';
+import { ChallengeWorkoutViewPage } from './challenges/ChallengeWorkoutViewPage';
 
 // import './index.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -21,7 +26,13 @@ const routes: RouteObject[] = [
   { path: "/workouts", element: <Workouts />, errorElement: <div>404</div> },
   { path: "/workouts/:workoutId", element: <SingleWorkoutPage />, errorElement: <div>404</div>  },
   { path: "/workouts/:workoutId/edit", element: <SingleWorkoutEditAddPage />, errorElement: <div>404</div>  },
-  { path: "/workouts/:workoutId/active", element: <ActiveWorkoutPage /> }
+  { path: "/workouts/:workoutId/active", element: <ActiveWorkoutPage /> },
+  { path: "/exercises", element: <ExercisesPage /> },
+  { path: "/statistics", element: <StatisticsPage /> },
+  { path: "/challenges", element: <ChallengesPage /> },
+  { path: "/challenges/:challengeId", element: <SingleChallengePage /> },
+  { path: "/challenges/:challengeId/workouts/:workoutId", element: <ChallengeWorkoutViewPage /> }
+
 
 
 ];

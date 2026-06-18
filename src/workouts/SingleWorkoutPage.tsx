@@ -139,14 +139,19 @@ export const SingleWorkoutPage: React.FC = () => {
 
             {/* 5. ПОДКЛЮЧАЕМ МОДАЛКУ ВНИЗУ И ПЕРЕДАЕМ ДАННЫЕ ИЗ СТЕЙТА */}
             <ExerciseModal
-                isOpen={activeExercise !== null}                 // Открыта, если в стейте что-то есть
-                onClose={() => setActiveExercise(null)}          // Закрытие зануляет стейт
-                onSave={handleSaveReps}                          // Передаем функцию сохранения
-                exerciseName={activeExercise?.name || ''}        // Имя выбранного упражнения
-                initialReps={activeExercise?.reps || 0}          // Повторения выбранного упражнения
-                description={activeExercise?.description}        // Описание выбранного упражнения
-                videoThumbnail={activeExercise?.imageUrl}        // Картинка выбранного упражнения
+                isOpen={activeExercise !== null}
+                onClose={() => setActiveExercise(null)}
+
+                onSave={(updatedData) => handleSaveReps(updatedData.reps)}
+
+                exerciseName={activeExercise?.name || ''}
+                initialReps={activeExercise?.reps || 0}
+
+                description={activeExercise?.description || ''}
+
+                videoThumbnail={activeExercise?.imageUrl}
             />
+
 
             <Footer />
         </div>

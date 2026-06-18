@@ -90,7 +90,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
   return (
     <div className={styles['workout-edit-page']}>
       <div className={styles['workout-edit-page__content']}>
-        
+
         {/* Кликабельный логотип */}
         <Header />
 
@@ -109,9 +109,9 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
           </div>
 
           <div className="col col-sm-3">
-            <input 
-              type="text" 
-              placeholder="Workout Name..." 
+            <input
+              type="text"
+              placeholder="Workout Name..."
               className={styles['workout-edit-page__input']}
             />
           </div>
@@ -127,7 +127,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
 
           {/* Кнопка Add a Set */}
           <div className="col-auto ms-auto">
-            <button 
+            <button
               className={styles['workout-edit-page__add-set-btn']}
               onClick={() => setIsChooseModalOpen(true)}
             >
@@ -145,7 +145,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
           {sets.map((set) => (
             <div key={set.id} className={styles['exercise-card']}>
               <div className="row g-0 align-items-center w-full h-100">
-                
+
                 <div className="col-auto h-100">
                   <div className={styles['exercise-card__image-wrapper']}>
                     <img src={set.imageUrl} alt={set.name} />
@@ -158,7 +158,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
                 </div>
 
                 <div className="col-auto pe-3 d-flex align-items-center gap-2">
-                  <button 
+                  <button
                     className={styles['exercise-card__action-btn']}
                     onClick={() => handleDeleteSet(set.id)}
                   >
@@ -168,7 +168,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
                     </svg>
                   </button>
 
-                  <button 
+                  <button
                     className={styles['exercise-card__action-btn']}
                     onClick={() => setActiveSet(set)}
                   >
@@ -194,18 +194,24 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
       </div>
 
       {/* Модалка 1: Редактирование */}
-      <ExerciseModal 
+      {/* Модалка 1: Редактирование конкретного упражнения (три точки) */}
+      <ExerciseModal
         isOpen={activeSet !== null}
         onClose={() => setActiveSet(null)}
-        onSave={handleSaveReps}
+
+        onSave={(updatedData) => handleSaveReps(updatedData.reps)}
+
         exerciseName={activeSet?.name || ''}
         initialReps={activeSet?.reps || 0}
-        description={activeSet?.description}
+
+        description={activeSet?.description || ''}
+
         videoThumbnail="https://unsplash.com"
       />
 
+
       {/* Модалка 2: Выбор новых упражнений */}
-      <ChooseExerciseModal 
+      <ChooseExerciseModal
         isOpen={isChooseModalOpen}
         onClose={() => setIsChooseModalOpen(false)}
         onAddExercises={handleAddNewExercises}

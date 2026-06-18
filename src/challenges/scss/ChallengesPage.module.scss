@@ -1,0 +1,141 @@
+$bg-main: #242424;
+$bg-card: #3a3a3a;
+$bg-card-alt: #4a4a4a;
+$text-white: #ffffff;
+$text-muted: #9ca3af;
+$color-blue: #3b82f6;
+
+$diff-medium: #eab308;
+$diff-hard: #ef4444;
+$diff-insane: #a855f7;
+
+.challenges-page {
+  min-height: 100vh;
+  background-color: $bg-main;
+  color: $text-white;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+
+  &__content {
+    width: 100%;
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 7rem 1.5rem;
+  }
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  &__add-btn {
+    background: none;
+    border: none;
+    color: $text-white;
+    font-size: 1.35rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+
+    &:active { transform: scale(0.95); }
+    svg { width: 1.5rem; height: 1.5rem; }
+  }
+}
+
+// Горизонтальные строки испытаний
+.challenge-row {
+  background-color: $bg-card-alt;
+  border-radius: 1.25rem;
+  height: 5.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+
+  &__image-wrapper {
+    width: 7.5rem;
+    height: 100%;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    color: $text-white;
+    letter-spacing: 0.025em;
+  }
+
+  &__difficulty-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $text-muted;
+    margin: 0;
+  }
+
+  &__difficulty {
+    &--medium { color: $diff-medium; }
+    &--hard   { color: $diff-hard; }
+    &--insane { color: $diff-insane; }
+  }
+
+  &__action-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+
+    &:active { transform: scale(0.9); }
+    svg { width: 100%; height: 100%; }
+  }
+}
+
+// Обновление подсветки таб-бара: теперь активна иконка кубка (третья кнопка)
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background-color: $bg-card;
+  padding: 0.875rem 2rem;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  
+  &__container {
+    max-width: 448px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  
+  &__button {
+    background: none; border: none; padding: 0.5rem; cursor: pointer;
+    color: $text-muted; // Неактивные иконки становятся серыми
+    
+    &--dumbbell { color: #60a5fa; }
+    &--todo     { color: #60a5fa; }
+    &--trophy   { color: $color-blue; } // АКТИВНАЯ ИКОНКА КУБКА ИЗ МАКЕТА
+    &--trends   { color: #60a5fa; }
+  }
+}
+
+.challenge-row-link {
+  text-decoration: none; // Убираем подчеркивание
+  color: inherit;        // Наследуем белый цвет текста приложения
+  display: block;        // Растягиваем ссылку на всю ширину
+  width: 100%;
+
+  &:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+}
