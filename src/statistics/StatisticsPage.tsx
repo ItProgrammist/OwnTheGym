@@ -7,7 +7,7 @@ import { Footer } from '../components/Footer';
 interface HistoryItem {
   id: string;
   title: string;
-  difficulty: 'Medium' | 'Hard' | 'Insane';
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
   date: string;
   imageUrl: string;
 }
@@ -44,7 +44,7 @@ export const StatisticsPage: React.FC = () => {
     },
   ];
 
-  const getDifficultyClass = (diff: 'Medium' | 'Hard' | 'Insane') => {
+  const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
     if (diff === 'Medium') return styles['history-row__difficulty--medium'];
     if (diff === 'Hard') return styles['history-row__difficulty--hard'];
     return styles['history-row__difficulty--insane'];

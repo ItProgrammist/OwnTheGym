@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Добавили useNavigate
+import { useNavigate } from 'react-router-dom';
 import styles from './scss/Workouts.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -8,7 +8,7 @@ import { Footer } from '../components/Footer';
 interface WorkoutItem {
     id: string;
     title: string;
-    difficulty: 'Medium' | 'Hard' | 'Insane';
+    difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
     imageUrl: string;
 }
 
@@ -36,40 +36,51 @@ export const Workouts: React.FC = () => {
         },
     ];
 
-    const getDifficultyClass = (diff: 'Medium' | 'Hard' | 'Insane') => {
+    const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
         if (diff === 'Medium') return styles['workout-row__difficulty--medium'];
         if (diff === 'Hard') return styles['workout-row__difficulty--hard'];
         return styles['workout-row__difficulty--insane'];
     };
 
-    // Блокируем клик карточки и обрабатываем удаление
+    // КЛИК НА КНОПКУ ADD: перенаправляет на страницу конструктора в режиме создания нового воркаута
+    const handleCreateWorkout = () => {
+        // Передаем параметр 'new', при этом state оставляем пустым, чтобы инпуты открылись чистыми
+        navigate('/workouts/new/edit');
+    };
+
+    // Блокируем всплытие клика карточки и обрабатываем удаление
     const handleDelete = (e: React.MouseEvent, title: string) => {
-        e.preventDefault(); 
         e.stopPropagation(); // Не дает сработать переходу по большой карточке
         console.log(`Удаление тренировки: ${title}`);
     };
 
-    // Блокируем клик карточки и перенаправляем на страницу редактирования
-    const handleEdit = (e: React.MouseEvent, workoutId: string) => {
-        e.preventDefault(); 
-        e.stopPropagation(); // Важно: предотвращает переход на /workouts/:id
+    // Блокируем всплытие клика карточки и перенаправляем на конструктор/редактирование
+    const handleEdit = (e: React.MouseEvent, workout: WorkoutItem) => {
+        e.stopPropagation(); // Не дает сработать переходу по большой карточке
         
-        // Программный переход на нужный рут редактирования
-        navigate(`/workouts/${workoutId}/edit`);
+        // Передаем объект воркаута для автоматического заполнения инпутов и дропдауна
+        navigate(`/workouts/${workout.id}/edit`, { state: { workout: workout } });
     };
 
     return (
         <div className={styles['workouts-page']}>
             <div className={styles['workouts-page__content']}>
 
+                {/* Логотип */}
                 <Header />
 
+                {/* Навигация секции с кнопкой Add */}
                 <div className="row g-0 align-items-center justify-content-between mb-4 px-1">
                     <div className="col-auto">
                         <h2 className={styles['workouts-page__title']}>Workouts</h2>
                     </div>
                     <div className="col-auto">
-                        <button className={styles['workouts-page__add-btn']}>
+                        {/* ИСПРАВЛЕНО: Добавлен обработчик onClick для создания тренировки */}
+                        <button 
+                            className={styles['workouts-page__add-btn']}
+                            onClick={handleCreateWorkout}
+                        >
+                            {/* Плюс в зеленом круге */}
                             <svg viewBox="0 0 24 24" fill="none" className="me-2">
                                 <circle cx="12" cy="12" r="11" fill="#22c55e" />
                                 <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -79,14 +90,14 @@ export const Workouts: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Список тренировок */}
+                {/* Список тренировок в виде горизонтальных плашек */}
                 <div className="d-flex flex-column gap-3">
                     {workouts.map((workout) => (
-                        /* Большая ссылка на просмотр воркаута */
-                        <Link 
+                        <div 
                             key={workout.id} 
-                            to={`/workouts/${workout.id}`} 
                             className={styles['workout-row-link']}
+                            onClick={() => navigate(`/workouts/${workout.id}`, { state: { workout: workout } })}
+                            style={{ cursor: 'pointer' }}
                         >
                             <div className={styles['workout-row']}>
                                 <div className="row g-0 align-items-center w-full h-100">
@@ -109,7 +120,7 @@ export const Workouts: React.FC = () => {
                                         </p>
                                     </div>
 
-                                    {/* Кнопки управления справа */}
+                                    {/* Кнопки управления (Удалить + Редактировать) */}
                                     <div className="col-auto pe-3 d-flex align-items-center gap-2">
                                         
                                         {/* Кнопка Удаления */}
@@ -123,10 +134,10 @@ export const Workouts: React.FC = () => {
                                             </svg>
                                         </button>
 
-                                        {/* Кнопка Редактирования (вызывает handleEdit) */}
+                                        {/* Кнопка Редактирования */}
                                         <button 
                                             className={styles['workout-row__action-btn']}
-                                            onClick={(e) => handleEdit(e, workout.id)}
+                                            onClick={(e) => handleEdit(e, workout)}
                                         >
                                             <svg viewBox="0 0 24 24" fill="none">
                                                 <rect x="2" y="2" width="20" height="20" rx="4" fill="#1d4ed8" fillOpacity="0.2" stroke="#3b82f6" strokeWidth="1.5" />
@@ -137,12 +148,13 @@ export const Workouts: React.FC = () => {
 
                                 </div>
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
 
             </div>
 
+            {/* Нижний таб-бар */}
             <Footer />
         </div>
     );

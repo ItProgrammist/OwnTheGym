@@ -1,28 +1,71 @@
-.header-link {
-  text-decoration: none; // Убирает подчеркивание ссылки
-  color: inherit;        // Заставляет текст сохранять белый цвет приложения
-  display: block;        // Растягивает область клика по ширине хедера
-  
-  &:hover {
+$text-white: #ffffff;
+$text-muted: #9ca3af;
+$color-blue-light: #60a5fa;
+
+.header {
+  width: 100%;
+  padding: 1rem 0 1.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  margin-bottom: 1.5rem;
+  min-height: 4.5rem;
+
+  // Модификатор для страниц авторизации
+  &--no-border {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  &__logo-link {
     text-decoration: none;
     color: inherit;
+    &:hover { text-decoration: none; color: inherit; }
   }
-}
 
-// Ваши существующие стили хедера (пример)
-.main-page__header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-  
-  h1 {
-    margin-top: 20px;
-    font-size: 1.7rem;
+  &__logo {
+    font-size: 1.5rem;
     font-weight: 900;
-    text-transform: uppercase;
+    margin: 0;
     letter-spacing: 0.05em;
-    
-    span {
-      color: #3b82f6; // Тот самый синий акцент для THEGYM
-    }
+    span { color: $color-blue-light; }
+  }
+
+  &__auth-wrapper {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+  }
+
+  &__auth-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+    &:hover { color: $color-blue-light; text-decoration: underline; }
+  }
+
+  &__user-block {
+    display: flex;
+    align-items: center;
+    color: $text-white;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition: opacity 0.15s ease;
+    &:hover { opacity: 0.8; }
+    svg { width: 1.15rem; height: 1.15rem; color: $color-blue-light; }
+  }
+
+  &__username {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

@@ -1,17 +1,28 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom'; // Добавили useLocation
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './scss/ChallengeWorkoutViewPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { ExerciseModal } from '../components/ExerciseModal';
+import { ChooseExerciseModal } from '../components/ChooseExerciseModal'; // 1. Импортируем модалку каталога
 
 interface ChallengeExerciseSet {
   id: string;
   name: string;
   imageUrl: string;
+  reps: number;
+  description: string;
 }
 
-// Описываем структуру данных, которую мы ждем из роутера
+// Интерфейс для строгого соответствия типов из каталога (убираем any)
+interface CatalogExerciseItem {
+  id: string;
+  name: string;
+  defaultReps: number;
+  imageUrl: string;
+}
+
 interface RouterStateLocation {
   workout?: {
     id: string;
@@ -24,44 +35,69 @@ interface RouterStateLocation {
 export const ChallengeWorkoutViewPage: React.FC = () => {
   const { challengeId, workoutId } = useParams<{ challengeId: string; workoutId: string }>();
   const navigate = useNavigate();
-  
-  // Извлекаем переданное состояние роутера
   const location = useLocation();
   const routerState = location.state as RouterStateLocation;
 
-  // ИСПРАВЛЕНО: Если данные пришли из роутера — берем их title, иначе ставим дефолтную заглушку
   const workoutTitle = routerState?.workout?.title || "Full Arms";
 
+  // Стейт для модального окна РЕДАКТИРОВАНИЯ повторений (три точки)
+  const [activeSet, setActiveSet] = useState<ChallengeExerciseSet | null>(null);
+
+  // 2. Стейт для модального окна ВЫБОРА новых упражнений из каталога
+  const [isChooseModalOpen, setIsChooseModalOpen] = useState<boolean>(false);
+
+  // Основной стейт списка подходов упражнений
   const [exerciseSets, setExerciseSets] = useState<ChallengeExerciseSet[]>([
     {
       id: 'ch-ex-1',
       name: 'Biceps curls with expander',
       imageUrl: 'https://unsplash.com',
+      reps: 25,
+      description: "This exercise is a real beast. You don't have to worry about your spine so much, it focuses only on biceps."
     },
     {
       id: 'ch-ex-2',
       name: 'Biceps curls with expander',
       imageUrl: 'https://unsplash.com',
+      reps: 20,
+      description: "Second set. Maintain strict control on the negative phase of the movement."
     },
     {
       id: 'ch-ex-3',
       name: 'Biceps curls with expander',
       imageUrl: 'https://unsplash.com',
+      reps: 15,
+      description: "Final set. Push to maximum failure while keeping perfect form."
     },
   ]);
 
-  const handleAddExerciseToChallengeWorkout = () => {
-    // ИСПРАВЛЕНО: Переменные из useParams теперь используются здесь, линтер больше не ругается
-    console.log(`Добавление упражнения в тренировку ${workoutId} для челленджа ${challengeId}`);
+  // 3. Функция, которая принимает выбранные из каталога упражнения и пушит их в тренировку челленджа
+  const handleAddExercisesFromCatalog = (selectedExercises: CatalogExerciseItem[]) => {
+    const newSets: ChallengeExerciseSet[] = selectedExercises.map((ex, index) => ({
+      id: `ch-ex-${Date.now()}-${index}`, // Генерация уникального ID
+      name: ex.name,
+      imageUrl: ex.imageUrl,
+      reps: ex.defaultReps,
+      description: "Added to challenge internal workout."
+    }));
+
+    setExerciseSets((prev) => [...prev, ...newSets]);
+    console.log(`Добавлено упражнений: ${selectedExercises.length} (Воркаут: ${workoutId})`);
   };
 
   const handleDeleteExercise = (id: string) => {
     setExerciseSets((prev) => prev.filter((item) => item.id !== id));
-    console.log(`Из тренировки ${workoutId} удален сет: ${id}`);
   };
 
-  const handleOpenExerciseDetails = (id: string) => {
-    console.log(`Открытие модалки деталей для сета: ${id} (ID тренировки: ${workoutId})`);
+  // Функция сохранения измененного количества повторений из модалки редактирования
+  const handleSaveReps = (newReps: number) => {
+    if (!activeSet) return;
+
+    setExerciseSets((prevSets) =>
+      prevSets.map((item) =>
+        item.id === activeSet.id ? { ...item, reps: newReps } : item
+      )
+    );
   };
 
   return (
@@ -70,18 +106,19 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
         
         <Header />
 
+        {/* Навигационная строка */}
         <div className="row g-0 align-items-center justify-content-between mb-4 px-1">
           <div className="col-auto">
-            {/* Текст названия теперь полностью динамический! */}
             <h2 className={styles['challenge-workout-view-page__title']}>
               {workoutTitle}
             </h2>
           </div>
           
           <div className="col-auto">
+            {/* 4. ИСПРАВЛЕНО: Кнопка Add теперь открывает модалку каталога упражнений */}
             <button 
               className={styles['challenge-workout-view-page__add-btn']}
-              onClick={handleAddExerciseToChallengeWorkout}
+              onClick={() => setIsChooseModalOpen(true)}
             >
               <svg viewBox="0 0 24 24" fill="none" className="me-2">
                 <circle cx="12" cy="12" r="11" fill="#22c55e" />
@@ -92,7 +129,7 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Список подходов */}
+        {/* Список подходов упражнений */}
         <div className="d-flex flex-column gap-3">
           {exerciseSets.map((set) => (
             <div key={set.id} className={styles['exercise-row']}>
@@ -104,10 +141,13 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="col ps-3 d-flex align-items-center">
+                <div className="col ps-3 d-flex flex-column justify-content-center">
                   <h3 className={styles['exercise-row__name']}>
                     {set.name}
                   </h3>
+                  <span className={styles['exercise-row__reps']}>
+                    x{set.reps}
+                  </span>
                 </div>
 
                 <div className="col-auto pe-3 d-flex align-items-center gap-2">
@@ -123,7 +163,7 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
 
                   <button 
                     className={styles['exercise-row__action-btn']}
-                    onClick={() => handleOpenExerciseDetails(set.id)}
+                    onClick={() => setActiveSet(set)}
                   >
                     <svg viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" fill="#2563eb" />
@@ -141,6 +181,24 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Модалка 1: Детальное редактирование существующего сета (три точки) */}
+      <ExerciseModal 
+        isOpen={activeSet !== null}
+        onClose={() => setActiveSet(null)}
+        onSave={(updatedData) => handleSaveReps(updatedData.reps)}
+        exerciseName={activeSet?.name || ''}
+        initialReps={activeSet?.reps || 0}
+        description={activeSet?.description || ''}
+        videoThumbnail={activeSet?.imageUrl}
+      />
+
+      {/* Модалка 2: Выбор и добавление новых упражнений из каталога (Кнопка Add) */}
+      <ChooseExerciseModal 
+        isOpen={isChooseModalOpen}
+        onClose={() => setIsChooseModalOpen(false)}
+        onAddExercises={handleAddExercisesFromCatalog}
+      />
 
       <Footer />
     </div>

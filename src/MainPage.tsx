@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Импортируем хук навигации для клика по карточкам
 import styles from './scss/MainPage.module.scss';
 import { Header } from './components/Header';
-import { Footer } from './components/Footer'
+import { Footer } from './components/Footer';
+import { CalendarModal } from './components/CalendarModal'; // Импортируем модальное табло календаря
 
 interface CalendarDay {
   dayName: string;
@@ -11,13 +13,19 @@ interface CalendarDay {
 }
 
 interface WorkoutCard {
+  id: string; // Добавили id для корректного роутинга при клике на карточку
   title: string;
-  difficulty: 'Medium' | 'Hard' | 'Insane';
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
   description: string;
   imageUrl: string;
 }
 
 export const MainPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Состояние для управления открытием модального окна полного календаря
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+
   const days: CalendarDay[] = [
     { dayName: 'S', dayNumber: 7, isCompleted: false },
     { dayName: 'M', dayNumber: 8, isCompleted: true },
@@ -30,27 +38,29 @@ export const MainPage: React.FC = () => {
 
   const workouts: WorkoutCard[] = [
     {
+      id: 'chest-mission',
       title: 'Chest Mission',
       difficulty: 'Hard',
       description: 'Includes: Negative, diamond, and controlled push-ups.',
-      imageUrl: '../public/placeholder.png',
+      imageUrl: '/placeholder.png', // Исправлен путь Vite к public
     },
     {
+      id: 'arms-killer',
       title: 'Arms Killer',
       difficulty: 'Medium',
       description: 'Includes: Expander biceps and forearms curls, triceps kickbacks.',
-      imageUrl: '../public/placeholder.png',
+      imageUrl: '/placeholder.png', // Исправлен путь Vite к public
     },
     {
+      id: 'leg-armageddon',
       title: 'Leg Armageddon',
       difficulty: 'Insane',
       description: 'Includes: Explosive jump squats, power lunges, Bulgarian split squats, wall sits...',
-      imageUrl: '../public/placeholder.png',
+      imageUrl: '/placeholder.png', // Исправлен путь Vite к public
     },
   ];
 
-  // Метод динамически вытягивает нужный захешированный класс сложности из CSS-модуля
-  const getDifficultyClass = (diff: 'Medium' | 'Hard' | 'Insane') => {
+  const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
     if (diff === 'Medium') return styles['workout-card__difficulty--medium'];
     if (diff === 'Hard') return styles['workout-card__difficulty--hard'];
     return styles['workout-card__difficulty--insane'];
@@ -60,40 +70,20 @@ export const MainPage: React.FC = () => {
     <div className={styles['main-page']}>
       <div className={styles['main-page__content']}>
 
-        {/* Логотип */}
+        {/* Глобальный логотип */}
         <Header />
 
         {/* Навигация секции */}
         <div className={styles['main-page__section-nav']}>
           <h2>History</h2>
-          <button>All Records</button>
+          {/* ИСПРАВЛЕНО: Добавлен onClick для открытия модального окна календаря */}
+          <button onClick={() => setIsCalendarOpen(true)}>
+            All Records
+          </button>
         </div>
 
-        {/* Календарная плашка */}
-        {/* <div className={styles['calendar-card']}>
-          <div className={styles['calendar-card__grid']}>
-            {days.map((day, idx) => (
-              <div key={idx} className={styles['calendar-card__day']}>
-                <span className={styles['calendar-card__day-name']}>
-                  {day.dayName}
-                </span>
-                <div className={styles['calendar-card__day-value']}>
-                  {day.isCompleted ? (
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="11" fill="white" />
-                      <circle cx="12" cy="12" r="9.5" fill="#3b82f6" />
-                      <path d="M8.5 12.5l2.5 2.5 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <span>{day.dayNumber}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div> */}
+        {/* Календарная плашка на 7 дней */}
         <div className={styles['calendar-card']}>
-          {/* Флекс-строка Bootstrap для выстраивания в один ряд */}
           <div className="row g-0 text-center justify-content-between align-items-center">
             {days.map((day, idx) => (
               <div key={idx} className="col d-flex flex-column align-items-center justify-content-center">
@@ -116,14 +106,19 @@ export const MainPage: React.FC = () => {
           </div>
         </div>
 
-
         {/* Сетка карточек тренировок */}
-        {/* Заменяем внешний грид на строку Bootstrap с отступами между карточками (g-4) */}
         <div className="row g-4">
           {workouts.map((workout, idx) => (
-            /* Каждая карточка занимает 4 колонки из 12 на ПК (md) и всю ширину на мобильных (12) */
             <div key={idx} className="col-12 col-md-4">
-              <div className={styles['workout-card']}>
+              <div
+                className={styles['workout-card']}
+                /* 
+                  Клик по карточке на главной плавно перенаправляет пользователя 
+                  на страницу просмотра тренировки и передает объект в state роутера
+                */
+                onClick={() => navigate(`/workouts/${workout.id}`, { state: { workout: workout } })}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className={styles['workout-card__image-wrapper']}>
                   <img
                     src={workout.imageUrl}
@@ -146,10 +141,15 @@ export const MainPage: React.FC = () => {
               </div>
             </div>
           ))}
-        </div> {/* Конец строки row */}
+        </div>
 
-      </div> {/* Тот самый закрывающий тег контентной части, который я забыл вернуть */}
+      </div>
 
+      {/* Модалка полного календаря за месяц подвязана к состоянию страницы */}
+      <CalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+      />
 
       {/* Нижняя навигационная панель */}
       <Footer />

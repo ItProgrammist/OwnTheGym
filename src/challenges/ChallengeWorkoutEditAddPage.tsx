@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import styles from './scss/SingleWorkoutEditAddPage.module.scss';
+import styles from './scss/ChallengeWorkoutEditAddPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { ExerciseModal } from '../components/ExerciseModal';
@@ -22,7 +22,6 @@ interface BaseExerciseFromCatalog {
   imageUrl: string;
 }
 
-// Описываем структуру приходящего state из роутера
 interface RouterStateLocation {
   workout?: {
     id: string;
@@ -32,26 +31,22 @@ interface RouterStateLocation {
   };
 }
 
-export const SingleWorkoutEditAddPage: React.FC = () => {
+export const ChallengeWorkoutEditAddPage: React.FC = () => {
   const { challengeId, workoutId } = useParams<{ challengeId: string; workoutId: string }>();
   const navigate = useNavigate();
-  
-  // Получаем данные из истории переходов роутера
   const location = useLocation();
   const routerState = location.state as RouterStateLocation;
 
-  // 1. КОНТРОЛИРУЕМЫЕ СТЕЙТЫ ДЛЯ ИНПУТА И ДРОПДАУНА (авто-заполнение из state роутера)
+  // Автозаполнение полей, если мы перешли из режима редактирования конкретного воркаута челленджа
   const [workoutName, setWorkoutName] = useState<string>(routerState?.workout?.title || '');
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard' | 'Insane' | ''>(routerState?.workout?.difficulty || '');
-  
-  // Состояние открытия кастомного дропдауна сложности
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // Стейты для модальных окон
+  // Состояния для модальных окон (редактирование reps и каталог выбора)
   const [activeSet, setActiveSet] = useState<ExerciseSet | null>(null);
   const [isChooseModalOpen, setIsChooseModalOpen] = useState<boolean>(false);
 
-  // Основной список подходов (сетов)
+  // Локальный список подходов (сетов) этой тренировки челленджа
   const [sets, setSets] = useState<ExerciseSet[]>([
     {
       id: 1,
@@ -62,20 +57,15 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
     },
   ]);
 
-  // Изменение reps из ExerciseModal (три точки)
   const handleSaveReps = (newReps: number) => {
     if (!activeSet) return;
-    setSets((prevSets) =>
-      prevSets.map((item) => (item.id === activeSet.id ? { ...item, reps: newReps } : item))
-    );
+    setSets((prevSets) => prevSets.map((item) => (item.id === activeSet.id ? { ...item, reps: newReps } : item)));
   };
 
-  // Удаление упражнения из списка конструктора
   const handleDeleteSet = (id: number) => {
     setSets((prevSets) => prevSets.filter((item) => item.id !== id));
   };
 
-  // Добавление новых сетов из ChooseExerciseModal (Add a Set)
   const handleAddNewExercises = (selectedExercises: BaseExerciseFromCatalog[]) => {
     const updatedSets: ExerciseSet[] = selectedExercises.map((ex, index) => ({
       id: Date.now() + index,
@@ -87,48 +77,36 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
     setSets((prev) => [...prev, ...updatedSets]);
   };
 
-  // Функция клика по элементу дропдауна сложности
-  const handleSelectDifficulty = (value: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-    setDifficulty(value);
-    setIsDropdownOpen(false); // Закрываем выпадающий список
-  };
-
-  // Клик по большой синей кнопке внизу страницы
   const handleSaveChanges = () => {
-    console.log("=== Инициировано сохранение изменений ===");
-    console.log(`Контекст сохранения: ${challengeId ? `Внутри челленджа ${challengeId}` : 'Общий список воркаутов'}`);
-    console.log(`Новое имя: ${workoutName}, Новая сложность: ${difficulty}`);
-    console.log("Текущий список подходов:", sets);
-
-    // После сохранения отправляем пользователя назад по истории навигации
+    console.log(`=== Сохранение тренировки внутри челленджа: ${challengeId} ===`);
+    console.log(`Имя тренировки: ${workoutName}, Сложность: ${difficulty}`);
+    console.log(`Список упражнений:`, sets);
+    
+    // После сохранения возвращаемся обратно к списку тренировок челленджа
     navigate(-1);
   };
 
   return (
     <div className={styles['workout-edit-page']}>
       <div className={styles['workout-edit-page__content']}>
-        
         <Header />
 
-        {/* Динамический h2 заголовок в зависимости от контекста пути */}
+        {/* Заголовок страницы */}
         <h2 className={styles['workout-edit-page__title']}>
-          {challengeId ? 'Edit Challenge Workout' : 'Edit Workout'}
+          {workoutId === 'new' ? 'Add Challenge Workout' : 'Edit Challenge Workout'}
         </h2>
 
-        {/* Панель управления: инпуты, дропдаун и кнопка добавления сета */}
+        {/* Верхняя панель управления */}
         <div className="row g-0 align-items-center mb-4 px-1 gap-2 gap-sm-3 position-relative">
-          
-          {/* Кнопка-карандаш */}
           <div className="col-auto">
-            <button className={styles['workout-edit-page__edit-icon-btn']}>
+            <div className={styles['workout-edit-page__edit-icon-btn']}>
               <svg viewBox="0 0 24 24" fill="none">
                 <rect width="24" height="24" rx="4" fill="#2563eb" />
                 <path d="M7 17l1.5.3L16 9.8l-2.5-2.5L6 14.8l1 2.2zM12.5 6.3l2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </button>
+            </div>
           </div>
 
-          {/* ИНПУТ: Поле ввода имени воркаута с автоподстановкой */}
           <div className="col col-sm-3">
             <input 
               type="text" 
@@ -139,35 +117,26 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
             />
           </div>
 
-          {/* ИНТЕРАКТИВНЫЙ ВЫПАДАЮЩИЙ ДРОПДАУН СЛОЖНОСТИ */}
           <div className="col col-sm-4 position-relative">
-            <div 
-              className={styles['workout-edit-page__dropdown']}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
+            <div className={styles['workout-edit-page__dropdown']} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
               <span>{difficulty ? difficulty : 'Choose the diff...'}</span>
               <svg viewBox="0 0 24 24" fill="none" className="ms-2" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
                 <path d="M7 10l5 5 5-5" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
 
-            {/* Выпадающее меню со списком опций сложности пиксель в пиксель */}
             {isDropdownOpen && (
               <div className={styles['dropdown-menu-list']}>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Easy')}>Easy</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Medium')}>Medium</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Hard')}>Hard</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Insane')}>Insane</div>
+                <div className={styles['dropdown-item-option']} onClick={() => { setDifficulty('Easy'); setIsDropdownOpen(false); }}>Easy</div>
+                <div className={styles['dropdown-item-option']} onClick={() => { setDifficulty('Medium'); setIsDropdownOpen(false); }}>Medium</div>
+                <div className={styles['dropdown-item-option']} onClick={() => { setDifficulty('Hard'); setIsDropdownOpen(false); }}>Hard</div>
+                <div className={styles['dropdown-item-option']} onClick={() => { setDifficulty('Insane'); setIsDropdownOpen(false); }}>Insane</div>
               </div>
             )}
           </div>
 
-          {/* Кнопка Add a Set */}
           <div className="col-auto ms-auto">
-            <button 
-              className={styles['workout-edit-page__add-set-btn']}
-              onClick={() => setIsChooseModalOpen(true)}
-            >
+            <button className={styles['workout-edit-page__add-set-btn']} onClick={() => setIsChooseModalOpen(true)}>
               <svg viewBox="0 0 24 24" fill="none" className="me-2">
                 <circle cx="12" cy="12" r="11" fill="#22c55e" />
                 <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -177,7 +146,7 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Список подходов */}
+        {/* Список подходов упражнений */}
         <div className="d-flex flex-column gap-3 mb-4">
           {sets.map((set) => (
             <div key={set.id} className={styles['exercise-card']}>
@@ -213,13 +182,9 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
         </div>
 
         {/* Кнопка сохранения изменений на странице */}
-        <button 
-          className={styles['workout-edit-page__save-btn']}
-          onClick={handleSaveChanges}
-        >
+        <button className={styles['workout-edit-page__save-btn']} onClick={handleSaveChanges}>
           Save Changes
         </button>
-
       </div>
 
       {/* Модалка 1: Детальное изменение reps у сета (три точки) */}
@@ -239,7 +204,6 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
         onClose={() => setIsChooseModalOpen(false)}
         onAddExercises={handleAddNewExercises}
       />
-
       <Footer />
     </div>
   );
