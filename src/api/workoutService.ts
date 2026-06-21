@@ -47,6 +47,21 @@ export interface ExerciseRequest {
     videoUrl: string;
 }
 
+export interface ChallengeItem {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    workouts: WorkoutItem[]; // Вложенный массив тренировок типа SPECIAL
+}
+
+export interface ChallengeCreateUpdatePayload {
+    title: string;
+    description: string;
+    imageUrl: string;
+    workoutIds: string[]; // Бэкенд обычно ожидает массив ID привязанных тренировок
+}
+
 export const workoutService = {
     // Получить все тренировки типа TYPICAL (обычные)
     getTypicalWorkouts: async () => {
@@ -107,8 +122,36 @@ export const workoutService = {
     },
 
     completeWorkout: async (id: string) => {
-        const response = await api.post(`/workouts/${id}/complete`, {});
+        // Генерируем текущее время в строгом формате ISO, который ожидает бэкенд
+        const payload = {
+            day: new Date().toISOString()
+        };
+
+        console.log(`=== [ОТПРАВКА POST /workouts/${id}/complete] ===`, payload);
+        const response = await api.post(`/workouts/${id}/complete`, payload);
         return response.data;
     },
 
+    getAllChallenges: async () => {
+        const response = await api.get<ChallengeItem[]>('/challenges');
+        return response.data;
+    },
+    getSpecialWorkouts: async () => {
+        // Запрашиваем общий эндпоинт, который точно существует
+        const response = await api.get<WorkoutItem[]>('/workouts');
+        const data = response.data;
+
+        // ИСПРАВЛЕНО НА 100%: Фильтруем данные прямо на фронтенде по вашей схеме Swagger
+        return Array.isArray(data) ? data.filter((w) => w.type === 'SPECIAL') : [];
+    },
+    createChallenge: async (payload: ChallengeCreateUpdatePayload) => {
+        const response = await api.post<ChallengeItem>('/challenges', payload);
+        return response.data;
+    },
+
+    // PUT /challenges/{id} — Обновить челлендж
+    updateChallenge: async (id: string, payload: ChallengeCreateUpdatePayload) => {
+        const response = await api.put<ChallengeItem>(`/challenges/${id}`, payload);
+        return response.data;
+    }
 };

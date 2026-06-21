@@ -1,209 +1,212 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './scss/ChallengeEditAddPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-
-interface ChallengeWorkoutItem {
-    id: string;
-    title: string;
-    difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
-    imageUrl: string;
-}
-
-interface RouterStateLocation {
-    challenge?: {
-        id: string;
-        title: string;
-        difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
-        imageUrl: string;
-    };
-}
+import { workoutService, type ChallengeItem, type WorkoutItem } from '../api/workoutService';
 
 export const ChallengeEditAddPage: React.FC = () => {
     const { challengeId } = useParams<{ challengeId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const routerState = location.state as RouterStateLocation;
+    const routerState = location.state as { challenge?: ChallengeItem };
 
-    // 1. АВТОПОДСТАНОВКА: подтягиваем имя и сложность челленджа из истории переходов
-    const [challengeName, setChallengeName] = useState<string>(routerState?.challenge?.title || '');
-    const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard' | 'Insane' | ''>(routerState?.challenge?.difficulty || '');
-    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+    // Текстовые поля формы
+    const [title, setTitle] = useState<string>(routerState?.challenge?.title || '');
+    const [description, setDescription] = useState<string>(routerState?.challenge?.description || '');
+    const [imageUrl, setImageUrl] = useState<string>(routerState?.challenge?.imageUrl || '');
 
-    // Список внутренних тренировок этого челленджа
-    const [internalWorkouts, setInternalWorkouts] = useState<ChallengeWorkoutItem[]>(
-        challengeId === 'new'
-            ? [] // Пустой массив для режима создания
-            : [  // Дефолтные тренировки только для режима редактирования
-                {
-                    id: 'ch-w-1',
-                    title: 'Full arms',
-                    difficulty: 'Medium',
-                    imageUrl: 'https://unsplash.com',
-                },
-                {
-                    id: 'ch-w-2',
-                    title: 'Pull ups cardio (biceps)',
-                    difficulty: 'Insane',
-                    imageUrl: 'https://unsplash.com',
-                },
-            ]
+    // Списки SPECIAL-тренировок
+    const [availableSpecialWorkouts, setAvailableSpecialWorkouts] = useState<WorkoutItem[]>([]);
+    const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<string[]>(
+        routerState?.challenge?.workouts?.map((w) => w.id) || []
     );
 
-    const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-        if (diff === 'Medium') return styles['workout-card__difficulty--medium'];
-        if (diff === 'Hard') return styles['workout-card__difficulty--hard'];
-        return styles['workout-card__difficulty--insane'];
+    const [loading, setLoading] = useState<boolean>(true);
+    const [submitting, setSubmitting] = useState<boolean>(false);
+
+    useEffect(() => {
+        const returnedChallengeData = (location.state as any)?.challenge;
+        const newWorkoutId = (location.state as any)?.justCreatedWorkoutId;
+
+        if (returnedChallengeData && newWorkoutId) {
+            console.log('Челлендж успешно перехвачен из роутера!');
+            console.log('Обновленный список ID тренировок:', returnedChallengeData.workoutIds);
+
+            // Намертво фиксируем массив со всеми старыми и новой тренировкой в стейт чекбоксов
+            setSelectedWorkoutIds(returnedChallengeData.workoutIds || []);
+
+            // Очищаем state истории, чтобы при ручном обновлении страницы (F5) данные не дублировались
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
+    // Подгружаем SPECIAL-воркауты при старте страницы
+    useEffect(() => {
+        async function fetchSpecialData() {
+            try {
+                setLoading(true);
+                const data = await workoutService.getSpecialWorkouts();
+                setAvailableSpecialWorkouts(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error('Ошибка при получении SPECIAL тренировок:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchSpecialData();
+    }, []);
+
+    const handleToggleWorkout = (id: string) => {
+        setSelectedWorkoutIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
     };
 
-    // 2. ПЕРЕХОД НА СОЗДАНИЕ ВОРКАУТА ЧЕЛЛЕНДЖА
-    const handleNavigateToCreateWorkout = () => {
-        navigate(`/challenges/${challengeId || 'new'}/workouts/new/edit`);
-    };
+    const handleCreateNewSpecialWorkout = () => {
+        // Сохраняем слепок челленджа, чтобы страница воркаута его запомнила
+        const currentChallengeSnapshot = {
+            id: challengeId,
+            title: title.trim(),
+            description: description.trim(),
+            imageUrl: imageUrl.trim(),
+            workoutIds: selectedWorkoutIds // Все ID, которые уже отмечены чекбоксами
+        };
 
-    // 3. ПЕРЕХОД НА РЕДАКТИРОВАНИЕ ВОРКАУТА ЧЕЛЛЕНДЖА С АВТОПОДТАНОВКОЙ ДАННЫХ
-    const handleNavigateToEditWorkout = (e: React.MouseEvent, workout: ChallengeWorkoutItem) => {
-        e.stopPropagation(); // Изолируем клик, чтобы не было конфликтов
-
-        // Переходим на ChallengeWorkoutEditAddPage и принудительно прокидываем весь объект воркаута в state
-        navigate(`/challenges/${challengeId || 'new'}/workouts/${workout.id}/edit`, {
-            state: { workout: workout }
+        // Перенаправляем на ОФИЦИАЛЬНУЮ страницу конструктора воркаутов, передавая слепок в state
+        navigate('/workouts/new/edit', {
+            state: {
+                forcedType: 'SPECIAL',
+                parentChallenge: currentChallengeSnapshot
+            }
         });
     };
 
-    const handleDeleteWorkout = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        setInternalWorkouts((prev) => prev.filter((item) => item.id !== id));
-    };
 
-    const handleSelectDifficulty = (value: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-        setDifficulty(value);
-        setIsDropdownOpen(false);
-    };
 
-    const handleSaveChallengeChanges = () => {
-        console.log(`=== Изменения челленджа успешно сохранены ===`);
-        navigate(-1);
+    // ОТПРАВКА ДАННЫХ НА БЭКЕНД
+    const handleSaveChallenge = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!title.trim() || !description.trim()) {
+            alert('Пожалуйста, заполните название и описание челленджа.');
+            return;
+        }
+
+        // Собираем массив объектов тренировок для совместимости с Hibernate/JPA DTO
+        const formattedWorkouts = selectedWorkoutIds.map((id) => ({ id }));
+
+        const payload = {
+            title: title.trim(),
+            description: description.trim(),
+            imageUrl: imageUrl.trim() || 'string',
+            workouts: formattedWorkouts, // Массив объектов [{id: "uuid"}]
+            workoutIds: selectedWorkoutIds // Дублируем как плоский массив для надежности
+        };
+
+        // ВЫВОДИМ ПОЛНЫЙ JSON В КОНСОЛЬ ПЕРЕД ОТПРАВКОЙ
+        console.log('=== [ЧЕЛЛЕНДЖ] ОТПРАВКА PAYLOAD НА БЭКЕНД ===');
+        console.log(JSON.stringify(payload, null, 2));
+        console.log('============================================');
+
+        try {
+            setSubmitting(true);
+
+            // ИСПРАВЛЕНО: Строгая проверка на создание новой записи по значению 'new' или отсутствию ID
+            if (challengeId === 'new' || !challengeId) {
+                console.log('Вызов: POST /challenges');
+                await workoutService.createChallenge(payload);
+            } else {
+                console.log(`Вызов: PUT /challenges/${challengeId}`);
+                await workoutService.updateChallenge(challengeId, payload);
+            }
+
+            console.log('Челлендж успешно сохранен на сервере!');
+            navigate('/challenges');
+        } catch (err: unknown) {
+            console.error('=== КРИТИЧЕСКАЯ ОШИБКА СОХРАНЕНИЯ ЧЕЛЛЕНДЖА ===', err);
+
+            if (axios.isAxiosError(err)) {
+                console.log('Ответ сервера с ошибкой:', err.response?.data);
+                const serverError = err.response?.data?.message || err.response?.data?.error;
+                alert(`Не удалось сохранить челлендж. Ошибка сервера: ${serverError || 'Некорректный DTO'}`);
+            } else {
+                alert('Произошла непредвиденная ошибка сети.');
+            }
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
-        <div className={styles['challenge-edit-page']}>
-            <div className={styles['challenge-edit-page__content']}>
+        <div className={`${styles['challenge-edit-page']} text-white min-vh-100 d-flex flex-column`} style={{ backgroundColor: '#1a1a1a', fontFamily: 'sans-serif' }}>
+            <div className="container flex-grow-1 py-4 px-3 d-flex flex-column align-items-center" style={{ maxWidth: '640px' }}>
                 <Header />
 
-                {/* Заголовок страницы */}
-                <h2 className={styles['challenge-edit-page__title']}>
-                    {challengeId === 'new' ? 'Add New Challenge' : 'Edit Challenge'}
+                <h2 className="fs-3 fw-bold my-4 text-start w-100 px-1">
+                    {challengeId === 'new' || !challengeId ? 'Create New Challenge' : 'Edit Challenge'}
                 </h2>
 
-                {/* Верхняя панель управления */}
-                <div className="row g-0 align-items-center mb-4 px-1 gap-2 gap-sm-3 position-relative">
-                    <div className="col-auto">
-                        <div className={styles['challenge-edit-page__edit-icon-btn']}>
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <rect width="24" height="24" rx="4" fill="#2563eb" />
-                                <path d="M7 17l1.5.3L16 9.8l-2.5-2.5L6 14.8l1 2.2zM12.5 6.3l2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        </div>
+                <form onSubmit={handleSaveChallenge} className="w-100 d-flex flex-column gap-3 mb-5">
+                    <div className="text-start">
+                        <label className="form-label small text-muted fw-bold">CHALLENGE TITLE</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Challenge name..." className="form-control border-0 p-3 text-white" style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem' }} required />
                     </div>
 
-                    {/* Инпут Названия челленджа */}
-                    <div className="col col-sm-3">
-                        <input
-                            type="text"
-                            value={challengeName}
-                            onChange={(e) => setChallengeName(e.target.value)}
-                            placeholder="Challenge Name..."
-                            className={styles['challenge-edit-page__input']}
-                        />
+                    <div className="text-start">
+                        <label className="form-label small text-muted fw-bold">DESCRIPTION</label>
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this challenge about?..." className="form-control border-0 p-3 text-white" rows={3} style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem', resize: 'none' }} required />
                     </div>
 
-                    {/* Дропдаун Сложности челленджа */}
-                    <div className="col col-sm-4 position-relative">
-                        <div className={styles['challenge-edit-page__dropdown']} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                            <span>{difficulty ? difficulty : 'Choose the diff...'}</span>
-                            <svg viewBox="0 0 24 24" fill="none" className="ms-2" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                                <path d="M7 10l5 5 5-5" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                    <div className="text-start">
+                        <label className="form-label small text-muted fw-bold">IMAGE URL</label>
+                        <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste link to image..." className="form-control border-0 p-3 text-white" style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem' }} />
+                    </div>
+
+                    <div className="text-start mt-3 w-100">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                            <label className="form-label small text-muted fw-bold m-0">ATTACH SPECIAL WORKOUTS</label>
+                            <button type="button" className="btn btn-sm btn-outline-primary px-3 rounded-pill" onClick={handleCreateNewSpecialWorkout} style={{ fontSize: '12px', fontWeight: 600 }}>
+                                + New Special Workout
+                            </button>
                         </div>
 
-                        {isDropdownOpen && (
-                            <div className={styles['dropdown-menu-list']}>
-                                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Easy')}>Easy</div>
-                                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Medium')}>Medium</div>
-                                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Hard')}>Hard</div>
-                                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Insane')}>Insane</div>
+                        {loading && <div className="text-muted small py-2">Загрузка доступных SPECIAL тренировок...</div>}
+
+                        {!loading && availableSpecialWorkouts.length === 0 && (
+                            <div className="text-muted small py-4 text-center border border-secondary border-dashed rounded-3" style={{ borderStyle: 'dashed' }}>
+                                В базе данных бэка пока нет тренировок с типом SPECIAL.
                             </div>
                         )}
-                    </div>
 
-                    {/* Кнопка Add a Workout — ведет на ChallengeWorkoutEditAddPage */}
-                    <div className="col-auto ms-auto">
-                        <button
-                            className={styles['challenge-edit-page__add-workout-btn']}
-                            onClick={handleNavigateToCreateWorkout}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" className="me-2">
-                                <circle cx="12" cy="12" r="11" fill="#22c55e" />
-                                <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                            </svg>
-                            Add a Workout
-                        </button>
-                    </div>
-                </div>
-
-                {/* Список вложенных тренировок челленджа */}
-                <div className="d-flex flex-column gap-3 mb-4">
-                    {internalWorkouts.map((workout) => (
-                        <div key={workout.id} className={styles['workout-card']}>
-                            <div className="row g-0 align-items-center w-full h-100">
-                                <div className="col-auto h-100">
-                                    <div className={styles['workout-card__image-wrapper']}>
-                                        <img src={workout.imageUrl} alt={workout.title} />
+                        <div className="d-flex flex-column gap-2 w-100 overflow-y-auto" style={{ maxHeight: '300px' }}>
+                            {availableSpecialWorkouts.map((wk) => (
+                                <div
+                                    key={wk.id}
+                                    className="p-3 rounded-3 d-flex align-items-center justify-content-between"
+                                    style={{ backgroundColor: '#252525', cursor: 'pointer' }}
+                                    onClick={() => handleToggleWorkout(wk.id)}
+                                >
+                                    <div className="d-flex align-items-center gap-3">
+                                        <input type="checkbox" checked={selectedWorkoutIds.includes(wk.id)} onChange={() => handleToggleWorkout(wk.id)} onClick={(e) => e.stopPropagation()} style={{ width: '1.15rem', height: '1.15rem', accentColor: '#2563eb' }} />
+                                        <span className="fw-semibold text-white">{wk.title}</span>
                                     </div>
+                                    <span className="badge bg-dark text-secondary border border-secondary rounded-pill small px-2 py-1" style={{ fontSize: '10px' }}>
+                                        {wk.level}
+                                    </span>
                                 </div>
-                                <div className="col ps-3 d-flex flex-column justify-content-center">
-                                    <h3 className={styles['workout-card__name']}>{workout.title}</h3>
-                                    <p className={styles['workout-card__difficulty-label']}>
-                                        Difficulty:{' '}
-                                        <span className={getDifficultyClass(workout.difficulty)}>
-                                            {workout.difficulty}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div className="col-auto pe-3 d-flex align-items-center gap-2">
-                                    {/* Кнопка удаления */}
-                                    <button className={styles['workout-card__action-btn']} onClick={(e) => handleDeleteWorkout(e, workout.id)}>
-                                        <svg viewBox="0 0 24 24" fill="none">
-                                            <circle cx="12" cy="12" r="10" fill="#fca5a5" />
-                                            <path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-                                        </svg>
-                                    </button>
-
-                                    {/* ИСПРАВЛЕНО: Заменили три точки на синий карандаш, ведущий на ChallengeWorkoutEditAddPage */}
-                                    <button
-                                        className={styles['workout-card__action-btn']}
-                                        onClick={(e) => handleNavigateToEditWorkout(e, workout)}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none">
-                                            <rect x="2" y="2" width="20" height="20" rx="4" fill="#1d4ed8" fillOpacity="0.2" stroke="#3b82f6" strokeWidth="1.5" />
-                                            <path d="M7 17l2.5.5L17 10l-3-3-7.5 7.5L7 17zM13 8l3 3" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </div>
 
-                {/* Большая синяя кнопка сохранения */}
-                <button className={styles['challenge-edit-page__save-btn']} onClick={handleSaveChallengeChanges}>
-                    Save Changes
-                </button>
+                    <button type="submit" className="btn btn-primary w-100 py-3 mt-4 rounded-3 fw-bold fs-5 border-0 text-white" disabled={submitting} style={{ backgroundColor: '#2563eb' }}>
+                        {submitting ? 'Saving Challenge...' : 'Save Challenge'}
+                    </button>
+                </form>
+
             </div>
-
             <Footer />
         </div>
     );

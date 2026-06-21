@@ -1,7 +1,7 @@
 $bg-overlay: rgba(0, 0, 0, 0.55);
 $bg-modal: #4a4a4a;
 $bg-input: #3a3a3a;
-$bg-textarea-plate: rgba(58, 79, 108, 0.4); 
+$bg-textarea-plate: rgba(58, 79, 108, 0.4);
 $text-white: #ffffff;
 $text-muted: #9ca3af;
 $color-blue: #2563eb;
@@ -11,7 +11,10 @@ $color-btn-close: #93c5fd;
 
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: $bg-overlay;
   display: flex;
   align-items: center;
@@ -61,8 +64,15 @@ $color-btn-close: #93c5fd;
     align-items: center;
     cursor: pointer;
     transition: transform 0.1s;
-    svg { width: 1.25rem; height: 1.25rem; }
-    &:active { transform: scale(0.9); }
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
   }
 
   &__reps-input {
@@ -76,7 +86,12 @@ $color-btn-close: #93c5fd;
     padding: 0.45rem 0;
     text-align: center;
     outline: none;
-    &::-webkit-outer-spin-button, &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
   }
 
   &__seconds-text {
@@ -105,27 +120,82 @@ $color-btn-close: #93c5fd;
   }
 }
 
+// ==========================================================================
+// ИСПРАВЛЕННЫЙ АДАПТИВНЫЙ ВИДЕОПЛЕЕР (Кинематографичный формат 16:9)
+// ==========================================================================
 .video-player {
   position: relative;
   width: 100%;
-  height: 12rem;
+
+  // ИСПРАВЛЕНО: Вместо жесткой высоты в rem задаем эталонное соотношение сторон 16:9.
+  // Теперь плеер, рамки и все кнопки управления (пауза, таймлайн, звук) 
+  // автоматически ужмутся и идеально впишутся в окошко на любом экране!
+  aspect-ratio: 16 / 9;
+
   border-radius: 0.875rem;
   overflow: hidden;
   margin-bottom: 1.25rem;
-  background-color: #1a1a1a;
-  &__iframe { width: 100%; height: 100%; border: none; }
-  &__thumbnail { width: 100%; height: 100%; object-fit: cover; }
+  background-color: #111111; // Черная подложка, чтобы не было белых просветов
+  z-index: 10;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+
+  // ИСПРАВЛЕНО: Растягиваем внутренний iframe пиксель в пиксель по границам 16:9
+  &__iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 20;
+    pointer-events: auto !important; // Гарантирует кликабельность всех кнопок управления
+  }
+
+  // Картинка-превью до нажатия на кнопку старта
+  &__thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // Красиво заполняет блок без растягивания букв
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  // Центральная синяя кнопка запуска
   &__play-btn {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.55);
+    background-color: rgba(255, 255, 255, 0.75);
     border: none;
-    width: 3.5rem; height: 2.25rem; border-radius: 0.5rem;
-    display: flex; align-items: center; justify-content: center;
-    svg { width: 1.5rem; height: 1.5rem; }
+    width: 4rem;
+    height: 2.5rem;
+    border-radius: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.95);
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    &:active {
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    svg {
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-left: 0.125rem; // Легкое смещение для идеального оптического центра треугольника
+    }
   }
 }
+
 
 .modal-btn {
   border: none;
@@ -135,7 +205,22 @@ $color-btn-close: #93c5fd;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.1s ease;
-  &:active { transform: scale(0.95); }
-  &--close { background-color: $color-btn-close; color: #1e3a8a; }
-  &--save { background-color: $color-blue; color: $text-white; &:hover { background-color: $color-blue-hover; } }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &--close {
+    background-color: $color-btn-close;
+    color: #1e3a8a;
+  }
+
+  &--save {
+    background-color: $color-blue;
+    color: $text-white;
+
+    &:hover {
+      background-color: $color-blue-hover;
+    }
+  }
 }

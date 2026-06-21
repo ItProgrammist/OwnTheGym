@@ -107,13 +107,9 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
     setSets((prev) => [...prev, ...updatedSets]);
   };
 
-  async function handleSaveChanges() {
-    if (!workoutName.trim()) {
-      alert('Пожалуйста, введите название тренировки.');
-      return;
-    }
-    if (!difficulty) {
-      alert('Пожалуйста, выберите уровень сложности.');
+  const handleSaveChanges = async () => {
+    if (!workoutName.trim() || !difficulty) {
+      alert('Пожалуйста, введите название и выберите сложность.');
       return;
     }
     if (sets.length === 0) {
@@ -121,24 +117,84 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
       return;
     }
 
-    const payload = buildWorkoutPayload(sets);
+    // Собираем числовые параметры подходов тренировки
+    const formattedSets = sets.map((s) => ({
+      exerciseId: s.exerciseId,
+      numberOfReps: parseInt(String(s.reps), 10) || 0,
+      amountOfTime: parseInt(String(s.time), 10) || 0
+    }));
+
+    // Извлекаем слепок челленджа, сохраненный нами при переходе
+    const parentChallenge = (location.state as any)?.parentChallenge;
+    const fromChallengeId = parentChallenge?.id;
+    const isSpecial = (location.state as any)?.forcedType === 'SPECIAL' || (routerState?.workout as any)?.type === 'SPECIAL' || !!fromChallengeId;
+
+    const payload = {
+      title: workoutName.trim(),
+      description: isSpecial ? 'Challenge special workout session' : 'Custom typical workout session',
+      level: difficulty,
+      type: isSpecial ? ('SPECIAL' as const) : ('TYPICAL' as const),
+      sets: formattedSets
+    };
 
     try {
-      if (workoutId === 'new') {
-        await workoutService.createWorkout(payload);
-      } else if (workoutId) {
-        await workoutService.updateWorkout(workoutId, payload);
-      }
-      navigate('/workouts');
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const serverError = err.response?.data?.message || err.response?.data?.error;
-        alert(`Не удалось сохранить воркаут на сервере. Ошибка: ${serverError || 'Некорректные данные DTO'}`);
+      let savedWorkoutId = workoutId;
+
+      // 1. Сохраняем саму тренировку в общую базу бэка
+      if (workoutId === 'new' || !workoutId) {
+        console.log('Вызов: POST /workouts (Создание)');
+        const savedWorkout = await workoutService.createWorkout(payload);
+        savedWorkoutId = savedWorkout.id; // Запоминаем сгенерированный сервером UUID
       } else {
-        alert('Произошла непредвиденная ошибка при отправке запроса.');
+        console.log(`Вызов: PUT /workouts/${workoutId} (Редактирование старого воркаута)`);
+        await workoutService.updateWorkout(workoutId, payload);
+        // savedWorkoutId остается равен текущему workoutId из useParams
       }
+
+      // 2. СИНХРОНИЗАЦИЯ ЧЕЛЛЕНДЖА (Работает одинаково и для создания, и для редактирования)
+      if (parentChallenge && fromChallengeId && fromChallengeId !== 'new') {
+        console.log('Обновление связей челленджа после редактирования воркаута...');
+
+        // Получаем актуальный список челленджей с сервера
+        const allChallenges = await workoutService.getAllChallenges();
+        const currentChallengeOnServer = allChallenges.find(c => c.id === fromChallengeId);
+
+        // Собираем все текущие ID тренировок челленджа
+        const existingWorkoutIds = currentChallengeOnServer?.workouts?.map(w => w.id) || parentChallenge.workoutIds || [];
+
+        // Добавляем ID (если это был новый воркаут) или сохраняем текущие
+        const combinedWorkoutIds = savedWorkoutId ? [...existingWorkoutIds, savedWorkoutId] : existingWorkoutIds;
+        const uniqueWorkoutIds = Array.from(new Set(combinedWorkoutIds));
+
+        const challengePayload = {
+          title: parentChallenge.title || currentChallengeOnServer?.title || '',
+          description: parentChallenge.description || currentChallengeOnServer?.description || '',
+          imageUrl: parentChallenge.imageUrl || currentChallengeOnServer?.imageUrl || '',
+          workoutIds: uniqueWorkoutIds // Весь массив SPECIAL воркаутов без потерь контента
+        };
+
+        console.log('=== [СИНХРОНИЗАЦИЯ ПРИ РЕДАКТИРОВАНИИ] PUT /challenges/{id} ===');
+        console.log(JSON.stringify(challengePayload, null, 2));
+
+        // Отправляем PUT на бэкенд, фиксируя изменения в базе данных PostgreSQL
+        await workoutService.updateChallenge(fromChallengeId, challengePayload);
+        console.log('Данные челленджа успешно обновлены!');
+      }
+
+      // Возвращаемся назад на страницу SingleChallengePage
+      if (fromChallengeId) {
+        navigate(`/challenges/${fromChallengeId}`, { state: { refresh: true } });
+      } else {
+        navigate(-1);
+      }
+    } catch (err: unknown) {
+      console.error('Критическая ошибка при сохранении изменений воркаута:', err);
+      alert('Не удалось сохранить изменения тренировки на сервере. Проверьте DTO.');
     }
-  }
+
+  };
+
+
 
   if (loading) {
     return <div className="text-center text-white mt-5">Загрузка тренировки...</div>;

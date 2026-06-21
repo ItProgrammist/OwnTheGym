@@ -17,6 +17,10 @@ export const WorkoutViewPage: React.FC = () => {
   const [activeExercise, setActiveExercise] = useState<WorkoutSetGet | null>(null);
   const [loading, setLoading] = useState<boolean>(!workout);
 
+  // Локальные состояния для хранения полных данных текущего выбранного упражнения
+  const [exerciseDescription, setExerciseDescription] = useState<string>('');
+  const [exerciseVideoUrl, setExerciseVideoUrl] = useState<string>('');
+
   useEffect(() => {
     if (workoutId) {
       setLoading(true);
@@ -27,11 +31,28 @@ export const WorkoutViewPage: React.FC = () => {
     }
   }, [workoutId]);
 
+  // ЭФФЕКТ СИНХРОНИЗАЦИИ: При клике на три точки подтягиваем видео-ссылку упражнения с сервера
+  useEffect(() => {
+    if (activeExercise?.exerciseId) {
+      workoutService.getExerciseById(activeExercise.exerciseId)
+        .then((res) => {
+          // Записываем оригинальное описание и полную ссылку на видео (Google Drive / YouTube)
+          setExerciseDescription(res.description || 'Описание техники отсутствует.');
+          setExerciseVideoUrl(res.videoUrl || '');
+        })
+        .catch((err) => {
+          console.error('Не удалось загрузить данные видео для упражнения:', err);
+          setExerciseDescription('Описание техники отсутствует.');
+          setExerciseVideoUrl('');
+        });
+    }
+  }, [activeExercise]);
+
   const buildWorkoutPayload = (sets: WorkoutSetGet[]) => ({
     title: workout!.title,
     description: workout!.description || 'Custom typical workout session',
     level: workout!.level,
-    type: workout!.type || 'TYPICAL' as const,
+    type: workout!.type || ('TYPICAL' as const),
     sets: sets.map((s) => ({
       exerciseId: s.exerciseId,
       numberOfReps: Number(s.numberOfReps ?? 0),
@@ -105,19 +126,22 @@ export const WorkoutViewPage: React.FC = () => {
         </button>
       </div>
 
-      {/* ЖЕЛЕЗОБЕТОННАЯ СВЯЗКА onSave С СЕРВЕРОМ ПО СХЕМЕ SWAGGER */}
+      {/* АВТОМАТИЧЕСКАЯ ОТПРАВКА КОРРЕКТНОГО МАССИВА СЕТОВ НА ПОРТ 8080 ПРИ КЛИКЕ НА SAVE */}
       <ExerciseModal
         isOpen={activeExercise !== null}
         onClose={() => setActiveExercise(null)}
-        exerciseId={activeExercise?.exerciseId}
         exerciseName={activeExercise?.exerciseTitle || ''}
         initialReps={activeExercise?.numberOfReps || 0}
         initialTime={activeExercise?.amountOfTime || 0}
+        // Передаем динамически подгруженные с сервера текст и видео-ссылку (включая Google Диск)
+        description={exerciseDescription}
+        videoThumbnail={exerciseVideoUrl} 
         onSave={async (updatedData) => {
           if (!workoutId || !workout || !activeExercise) {
             throw new Error('Missing workout data');
           }
 
+          // Рассчитываем актуальные числовые сеты на основе выбранного режима reps/time в модалке
           const nextSets = workout.sets.map((s) =>
             s.id === activeExercise.id
               ? {
@@ -128,14 +152,16 @@ export const WorkoutViewPage: React.FC = () => {
               : s
           );
 
+          // Шлём единый PUT-запрос воркаута на сервер Spring Boot (порт 8080)
           const updatedWorkout = await workoutService.updateWorkout(
             workoutId,
             buildWorkoutPayload(nextSets)
           );
+          
+          // Фиксируем обновленный массив в стейте, чтобы данные не пропадали при F5
           setWorkout(updatedWorkout);
         }}
       />
-
 
       <Footer />
     </div>

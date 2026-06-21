@@ -1,162 +1,167 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Импортируем Link и useNavigate
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './scss/ChallengesPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-
-interface ChallengeItem {
-  id: string;
-  title: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
-  imageUrl: string;
-}
+import { workoutService, type ChallengeItem } from '../api/workoutService';
 
 export const ChallengesPage: React.FC = () => {
   const navigate = useNavigate();
+  const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Список доступных челленджей
-  const [challenges, setChallenges] = useState<ChallengeItem[]>([
-    {
-      id: 'chest-domination',
-      title: 'CHEST DOMINATION',
-      difficulty: 'Hard',
-      imageUrl: 'https://unsplash.com',
-    },
-    {
-      id: 'arm-war-challenge',
-      title: 'ARM WAR Challenge',
-      difficulty: 'Medium',
-      imageUrl: 'https://unsplash.com',
-    },
-    {
-      id: 'leg-samson-challenge',
-      title: 'LEG SAMSON Challenge',
-      difficulty: 'Insane',
-      imageUrl: 'https://unsplash.com',
-    },
-  ]);
+  async function loadChallenges() {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-    if (diff === 'Medium') return styles['challenge-row__difficulty--medium'];
-    if (diff === 'Hard') return styles['challenge-row__difficulty--hard'];
-    return styles['challenge-row__difficulty--insane'];
-  };
+      const data = await workoutService.getAllChallenges();
 
-  const handleAddChallenge = () => {
-    console.log('Добавление нового испытания');
-  };
+      // ==========================================================================
+      // КРИТИЧЕСКИЙ ЛОГ: Проверяем, что именно прислал бэкенд по сети
+      // ==========================================================================
+      console.log('=== [ЧЕЛЛЕНДЖИ С БЭКЕНДА] ДАННЫЕ УСПЕШНО ПРИЛЕТЕЛИ ===');
+      console.log('Тип данных:', typeof data);
+      console.log('Является ли массивом:', Array.isArray(data));
+      console.log('Сам ответ (data):', data);
+      console.log('======================================================');
 
-  const handleDeleteChallenge = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation(); // Изолируем клик от внешнего Link
-    setChallenges((prev) => prev.filter((item) => item.id !== id));
-  };
+      setChallenges(Array.isArray(data) ? data : []);
+    } catch (err: unknown) {
+      console.error('=== [КРИТИЧЕСКАЯ ОШИБКА СЕТИ ЧЕЛЛЕНДЖЕЙ] ===', err);
+      if (axios.isAxiosError(err)) {
+        console.log('Статус-код ошибки сервера:', err.response?.status);
+        console.log('Тело ошибки сервера:', err.response?.data);
+        setError(err.response?.data?.message || 'Не удалось загрузить челленджи с сервера.');
+      } else {
+        setError('Произошла ошибка при получении списка испытаний.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  // ИСПРАВЛЕНО: Теперь функция принимает весь объект challenge, а не только id
-  const handleEditChallenge = (e: React.MouseEvent, challenge: ChallengeItem) => {
-    e.preventDefault();
-    e.stopPropagation(); // Изолируем клик от перехода по большой плашке
 
-    // Явно передаем пару ключ-значение "challenge: challenge" в state истории роутера
-    navigate(`/challenges/${challenge.id}/edit`, { state: { challenge: challenge } });
-  };
+  useEffect(() => {
+    loadChallenges();
+  }, []);
 
+  function handleCreateChallenge() {
+    navigate('/challenges/new/edit');
+  }
 
   return (
-    <div className={styles['challenges-page']}>
-      <div className={styles['challenges-page__content']}>
-
-        {/* Кликабельный верхний логотип */}
+    <div className={`${styles['challenges-page']} text-white min-vh-100 d-flex flex-column`} style={{ backgroundColor: '#1a1a1a', fontFamily: 'sans-serif' }}>
+      <div className="container flex-grow-1 py-4 px-3 d-flex flex-column align-items-center" style={{ maxWidth: '640px' }}>
         <Header />
 
-        {/* Панель навигации: Заголовок секции + Кнопка Add */}
-        <div className="row g-0 align-items-center justify-content-between mb-4 px-1">
-          <div className="col-auto">
-            <h2 className={styles['challenges-page__title']}>Challenges</h2>
-          </div>
-          <div className="col-auto">
-            {/* ИСПРАВЛЕНО: Кнопка вызывает переход на роут создания нового челленджа без передачи state */}
-            <button
-              className={styles['challenges-page__add-btn']}
-              onClick={() => navigate('/challenges/new/edit')}
-            >
-              <svg viewBox="0 0 24 24" fill="none" className="me-2">
-                <circle cx="12" cy="12" r="11" fill="#22c55e" />
-                <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-              Add
-            </button>
-          </div>
+        {/* Панель навигации секции */}
+        <div className="d-flex align-items-center justify-content-between mb-4 mt-2 w-100 px-1">
+          <h2 className="fs-3 fw-bold m-0">Challenges</h2>
+          <button
+            className="btn btn-success d-flex align-items-center gap-2 fw-semibold px-3 py-2 border-0 shadow-sm"
+            onClick={handleCreateChallenge}
+            style={{ backgroundColor: '#22c55e', borderRadius: '0.75rem' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.25rem', height: '1.25rem' }}>
+              <circle cx="12" cy="12" r="11" fill="none" stroke="white" strokeWidth="2.5" />
+              <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            Add
+          </button>
         </div>
 
-        {/* Список плашек челленджей */}
-        <div className="d-flex flex-column gap-3">
-          {challenges.map((challenge) => (
-            <div
-              key={challenge.id}
-              className={styles['challenge-row-link']}
-              /* ИСПРАВЛЕНО: При клике на саму строку переходим и передаем объект в state */
-              onClick={() => navigate(`/challenges/${challenge.id}`, { state: { challenge: challenge } })}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className={styles['challenge-row']}>
-                <div className="row g-0 align-items-center w-full h-100">
+        {/* Индикаторы загрузки и сетевых ошибок */}
+        {loading && <div className="text-center text-muted my-4 fs-5">Загрузка активных испытаний...</div>}
+        {error && <div className="alert alert-danger w-100 py-2 rounded-3 small border-0 text-center">{error}</div>}
 
-                  {/* Превью-изображение испытания */}
-                  <div className="col-auto h-100">
-                    <div className={styles['challenge-row__image-wrapper']}>
-                      <img src={challenge.imageUrl} alt={challenge.title} />
+        {/* Состояние пустого списка */}
+        {!loading && !error && challenges.length === 0 && (
+          <div className="text-center text-secondary py-5">
+            <p className="m-0">Глобальные челленджи пока отсутствуют на сервере.</p>
+            <span className="small text-muted">Нажмите кнопку Add, чтобы создать первое испытание.</span>
+          </div>
+        )}
+
+        {/* СЕТКА С КАРТОЧКАМИ ЧЕЛЛЕНДЖЕЙ */}
+        <div className="d-flex flex-column gap-3 w-100 mb-5">
+          {challenges.map((challenge) => {
+            if (!challenge) return null;
+
+            const workoutsCount = challenge.workouts?.length || 0;
+
+            return (
+              <div
+                key={challenge.id}
+                className="card border-0 rounded-4 overflow-hidden text-white shadow-sm w-100"
+                style={{ backgroundColor: '#2d2d2d', cursor: 'pointer', transition: 'transform 0.1s' }}
+                onClick={() => navigate(`/challenges/${challenge.id}`, { state: { challenge } })}
+              >
+                <div className="row g-0 align-items-center p-3">
+
+                  {/* Картинка челленджа */}
+                  <div className="col-auto">
+                    <div className="rounded-3 overflow-hidden bg-black d-flex align-items-center justify-content-center" style={{ width: '4.5rem', height: '4.5rem' }}>
+                      <img
+                        src={challenge.imageUrl || '/placeholder.png'}
+                        alt={challenge.title || 'Challenge'}
+                        className="w-100 h-100 object-fit-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
+                      />
                     </div>
                   </div>
 
-                  {/* Инфо */}
-                  <div className="col ps-3 d-flex flex-column justify-content-center">
-                    <h3 className={styles['challenge-row__title']}>{challenge.title}</h3>
-                    <p className={styles['challenge-row__difficulty-label']}>
-                      Difficulty:{' '}
-                      <span className={getDifficultyClass(challenge.difficulty)}>
-                        {challenge.difficulty}
-                      </span>
+                  {/* Текстовое описание */}
+                  <div className="col ps-3 text-start">
+                    <h3 className="fs-5 fw-bold mb-1 text-white">{challenge.title || 'Без названия'}</h3>
+                    <p className="small text-muted mb-2 text-truncate" style={{ maxWidth: '260px' }}>
+                      {challenge.description || 'Описание фитнес-испытания отсутствует.'}
                     </p>
+
+                    <span className="badge text-primary-emphasis bg-primary-subtle border border-primary-subtle px-2 py-1 small rounded" style={{ fontSize: '11px' }}>
+                      {workoutsCount} {workoutsCount === 1 ? 'workout' : 'workouts'}
+                    </span>
                   </div>
 
-                  {/* Кнопки управления справа */}
-                  <div className="col-auto pe-3 d-flex align-items-center gap-2">
+                  {/* ДВЕ ИКОНКИ УПРАВЛЕНИЯ В ПРАВОМ УГЛУ ПЛАШКИ */}
+                  <div className="col-auto d-flex align-items-center gap-2 pe-1">
+
+                    {/* ИСПРАВЛЕНО: Карандаш редактирования для каждого челленджа */}
                     <button
-                      className={styles['challenge-row__action-btn']}
-                      onClick={(e) => handleDeleteChallenge(e, challenge.id)}
+                      type="button"
+                      className="btn p-2 d-flex align-items-center justify-content-center border-0"
+                      style={{ width: '2.25rem', height: '2.25rem', backgroundColor: 'rgba(37, 99, 235, 0.2)', borderRadius: '0.5rem', color: '#3b82f6' }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Изолируем клик, чтобы не открывался просмотр SingleChallengePage
+                        navigate(`/challenges/${challenge.id}/edit`, { state: { challenge } });
+                      }}
+                      title="Редактировать челлендж"
                     >
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#fca5a5" />
-                        <path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+                      <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.15rem', height: '1.15rem' }}>
+                        <path d="M7 17l1.5.3L16 9.8l-2.5-2.5L6 14.8l1 2.2zM12.5 6.3l2.5 2.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </button>
 
-                    {/* Кнопка редактирования челленджа (синий карандаш) */}
-                    <button
-                      className={styles['challenge-row__action-btn']}
-                      /* ИСПРАВЛЕНО: Передаем в handleEditChallenge весь текущий объект итерации */
-                      onClick={(e) => handleEditChallenge(e, challenge)}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <rect x="2" y="2" width="20" height="20" rx="4" fill="#1d4ed8" fillOpacity="0.2" stroke="#3b82f6" strokeWidth="1.5" />
-                        <path d="M7 17l2.5.5L17 10l-3-3-7.5 7.5L7 17zM13 8l3 3" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Шеврон перехода на SingleChallengePage */}
+                    <div className="text-secondary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '1.25rem' }}>
+                        <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                    </button>
+                    </div>
 
                   </div>
 
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
 
       </div>
-
-      {/* Глобальный таб-бар */}
       <Footer />
     </div>
   );

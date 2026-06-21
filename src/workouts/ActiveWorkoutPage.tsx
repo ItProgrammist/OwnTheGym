@@ -183,6 +183,7 @@ export const ActiveWorkoutPage: React.FC = () => {
     const nextSets = applyCurrentInputToSets(sets).map((item, idx) =>
       idx === currentSetIndex ? { ...item, isFinished: true } : item
     );
+
     setSets(nextSets);
 
     const isLastExercise = currentSetIndex === sets.length - 1;
@@ -190,19 +191,31 @@ export const ActiveWorkoutPage: React.FC = () => {
     if (isLastExercise) {
       try {
         setCompleting(true);
+
         await persistWorkoutSets(nextSets);
-        await workoutService.completeWorkout(workoutId);
+
+        await workoutService.completeWorkout(workoutId, {
+          day: new Date().toISOString(),
+        });
+
         navigate('/statistics');
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
-          const serverError = err.response?.data?.message || err.response?.data?.error;
-          alert(`Не удалось завершить тренировку. Ошибка: ${serverError || 'Ошибка сервера'}`);
+          const serverError =
+            err.response?.data?.message ||
+            err.response?.data?.error;
+
+          alert(
+            `Не удалось завершить тренировку. Ошибка: ${serverError || 'Ошибка сервера'
+            }`
+          );
         } else {
           alert('Не удалось завершить тренировку.');
         }
       } finally {
         setCompleting(false);
       }
+
       return;
     }
 
@@ -236,12 +249,12 @@ export const ActiveWorkoutPage: React.FC = () => {
           </div>
 
           <div className="col-auto ms-auto d-flex gap-2">
-            <button className={styles['active-workout-page__control-btn']} onClick={() => navigate(`/workouts/${workoutId}/edit`, { state: { workout } })}>
+            {/* <button className={styles['active-workout-page__control-btn']} onClick={() => navigate(`/workouts/${workoutId}/edit`, { state: { workout } })}>
               <svg viewBox="0 0 24 24" fill="none">
                 <rect width="24" height="24" rx="4" fill="#2563eb" />
                 <path d="M7 17l1.5.3L16 9.8l-2.5-2.5L6 14.8l1 2.2zM12.5 6.3l2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </button>
+            </button> */}
             <button className={styles['active-workout-page__control-btn']} onClick={() => navigate('/workouts')}>
               <svg viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="11" fill="#fca5a5" />
