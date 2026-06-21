@@ -1,0 +1,233 @@
+$bg-overlay: rgba(0, 0, 0, 0.55);
+$bg-modal: #4a4a4a;
+$bg-input: #3a3a3a;
+$bg-textarea-plate: rgba(58, 79, 108, 0.7);
+$text-white: #ffffff;
+$text-muted: #9ca3af;
+$color-blue: #2563eb;
+$color-blue-hover: #1d4ed8;
+$color-blue-light: #3b82f6;
+$color-btn-close: #93c5fd;
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: $bg-overlay;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 35000;
+  padding: 1.5rem;
+  backdrop-filter: blur(2px);
+}
+
+.modal-container {
+  background-color: $bg-modal;
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 640px;
+  padding: 1.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  color: $text-white;
+  font-family: sans-serif;
+
+  &__title-input {
+    background-color: $bg-textarea-plate;
+    border: none;
+    border-radius: 0.75rem;
+    color: $text-white;
+    font-size: 1.15rem;
+    font-weight: 700;
+    width: fit-content;
+    min-width: 260px;
+    padding: 0.4rem 1.25rem;
+    outline: none;
+    letter-spacing: 0.015em;
+  }
+
+  &__video-btn-label {
+    color: $text-white;
+    font-size: 1.15rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  // Инпут ссылки на видео справа от лейбла
+  &__video-input {
+    background-color: $bg-input;
+    border: none;
+    border-radius: 0.75rem;
+    color: $color-blue-light;
+    font-size: 0.875rem;
+    font-weight: 600;
+    width: 100%;
+    padding: 0.45rem 1rem;
+    outline: none;
+    &::placeholder { color: $text-muted; }
+  }
+
+  &__description-textarea {
+    background-color: $bg-textarea-plate;
+    border: none;
+    border-radius: 0.875rem;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-style: italic;
+    line-height: 1.4;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    max-width: 340px;
+    resize: none;
+    outline: none;
+    &::placeholder { color: $text-muted; }
+  }
+}
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  &__thumbnail { width: 100%; height: 100%; object-fit: cover; }
+  &__play-btn {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.55);
+    border: none;
+    width: 3.5rem; height: 2.25rem; border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+    svg { width: 1.5rem; height: 1.5rem; margin-left: 0.125rem; }
+  }
+}
+
+.modal-btn {
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  &:active:not(:disabled) { transform: scale(0.95); }
+
+  &--close { background-color: $color-btn-close; color: #1e3a8a; }
+  &--save { 
+    background-color: $color-blue; 
+    color: $text-white; 
+    &:hover:not(:disabled) { background-color: $color-blue-hover; } 
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+}
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  background-color: #1a1a1a; // Черная подложка на время загрузки видео
+
+  // Растягиваем iframe на всю площадь плеера пиксель в пиксель
+  &__iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0.875rem;
+  }
+
+  &__thumbnail { width: 100%; height: 100%; object-fit: cover; }
+  &__play-btn {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.55);
+    border: none;
+    width: 3.5rem; height: 2.25rem; border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color 0.2s;
+    &:hover { background-color: rgba(255, 255, 255, 0.8); }
+    svg { width: 1.5rem; height: 1.5rem; margin-left: 0.125rem; }
+  }
+}
+
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  background-color: #1a1a1a;
+  z-index: 10;
+
+  // ИСПРАВЛЕНО: Слой принудительно открывает доступ для кликов мыши
+  &__wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 20;
+    pointer-events: auto !important; 
+  }
+
+  &__thumbnail { width: 100%; height: 100%; object-fit: cover; }
+  &__play-btn {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.55);
+    border: none;
+    width: 3.5rem; height: 2.25rem; border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 30;
+    cursor: pointer;
+    svg { width: 1.5rem; height: 1.5rem; margin-left: 0.125rem; }
+  }
+}
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 250px; // Задай фиксированную высоту для теста
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  z-index: 1;
+
+  &__iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: auto !important; // Разрешаем клики
+  }
+
+  &__thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    border: none;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+  }
+}

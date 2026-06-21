@@ -69,3 +69,14 @@ $color-blue-light: #60a5fa;
     white-space: nowrap;
   }
 }
+
+.header__logout-btn {
+  background: none;
+  border: none;
+  color: #ef4444; // Красный цвет по макету удаления/выхода
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  &:hover { text-decoration: underline; }
+}

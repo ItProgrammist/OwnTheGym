@@ -1,210 +1,227 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './scss/SingleWorkoutEditAddPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { ExerciseModal } from '../components/ExerciseModal';
 import { ChooseExerciseModal } from '../components/ChooseExerciseModal';
+import {
+  workoutService,
+  type WorkoutItem,
+  type WorkoutLevel,
+  type WorkoutSetPost,
+  type WorkoutSetGet,
+} from '../api/workoutService';
 
-interface ExerciseSet {
-  id: number;
+interface LocalExerciseSet {
+  id: string;
+  exerciseId: string;
   name: string;
   reps: number;
-  imageUrl: string;
-  description?: string;
-}
-
-interface BaseExerciseFromCatalog {
-  id: string;
-  name: string;
-  defaultReps: number;
-  imageUrl: string;
-}
-
-// Описываем структуру приходящего state из роутера
-interface RouterStateLocation {
-  workout?: {
-    id: string;
-    title: string;
-    difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
-    imageUrl: string;
-  };
+  time: number;
 }
 
 export const SingleWorkoutEditAddPage: React.FC = () => {
-  const { challengeId, workoutId } = useParams<{ challengeId: string; workoutId: string }>();
+  const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
-  
-  // Получаем данные из истории переходов роутера
   const location = useLocation();
-  const routerState = location.state as RouterStateLocation;
+  const routerState = location.state as { workout?: WorkoutItem };
 
-  // 1. КОНТРОЛИРУЕМЫЕ СТЕЙТЫ ДЛЯ ИНПУТА И ДРОПДАУНА (авто-заполнение из state роутера)
   const [workoutName, setWorkoutName] = useState<string>(routerState?.workout?.title || '');
-  const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard' | 'Insane' | ''>(routerState?.workout?.difficulty || '');
-  
-  // Состояние открытия кастомного дропдауна сложности
+  const [difficulty, setDifficulty] = useState<WorkoutLevel | ''>(
+    (routerState?.workout?.level?.toUpperCase() as WorkoutLevel) || ''
+  );
+  const [workoutDescription, setWorkoutDescription] = useState<string>(
+    routerState?.workout?.description || 'Custom typical workout session'
+  );
+
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-
-  // Стейты для модальных окон
-  const [activeSet, setActiveSet] = useState<ExerciseSet | null>(null);
   const [isChooseModalOpen, setIsChooseModalOpen] = useState<boolean>(false);
+  const [activeSet, setActiveSet] = useState<LocalExerciseSet | null>(null);
+  const [loading, setLoading] = useState<boolean>(workoutId !== 'new' && !routerState?.workout);
 
-  // Основной список подходов (сетов)
-  const [sets, setSets] = useState<ExerciseSet[]>([
-    {
-      id: 1,
-      name: 'Biceps curls with expander',
-      reps: 25,
-      imageUrl: 'https://unsplash.com',
-      description: "This exercise is a real beast. You don't have to worry about your spine so much, it focuses only on biceps."
-    },
-  ]);
+  const [sets, setSets] = useState<LocalExerciseSet[]>(
+    routerState?.workout?.sets.map((s, index) => ({
+      id: s.id || `set-${Date.now()}-${index}`,
+      exerciseId: s.exerciseId,
+      name: s.exerciseTitle || 'Упражнение',
+      reps: s.numberOfReps || 0,
+      time: s.amountOfTime || 0,
+    })) || []
+  );
 
-  // Изменение reps из ExerciseModal (три точки)
-  const handleSaveReps = (newReps: number) => {
-    if (!activeSet) return;
-    setSets((prevSets) =>
-      prevSets.map((item) => (item.id === activeSet.id ? { ...item, reps: newReps } : item))
-    );
+  useEffect(() => {
+    if (!workoutId || workoutId === 'new') return;
+
+    setLoading(true);
+    workoutService.getWorkoutById(workoutId)
+      .then((data) => {
+        setWorkoutName(data.title);
+        setDifficulty(data.level);
+        setWorkoutDescription(data.description || 'Custom typical workout session');
+        setSets(mapWorkoutSetsToLocal(data.sets));
+      })
+      .catch((err) => console.error('Ошибка при загрузке тренировки:', err))
+      .finally(() => setLoading(false));
+  }, [workoutId]);
+
+  const mapWorkoutSetsToLocal = (workoutSets: WorkoutSetGet[]): LocalExerciseSet[] =>
+    workoutSets.map((s, index) => ({
+      id: s.id || `set-${Date.now()}-${index}`,
+      exerciseId: s.exerciseId,
+      name: s.exerciseTitle || 'Упражнение',
+      reps: s.numberOfReps || 0,
+      time: s.amountOfTime || 0,
+    }));
+
+  const buildWorkoutPayload = (nextSets: LocalExerciseSet[]) => {
+    const formattedSets: WorkoutSetPost[] = nextSets.map((s) => ({
+      exerciseId: s.exerciseId,
+      numberOfReps: Number(s.reps),
+      amountOfTime: Number(s.time),
+    }));
+
+    return {
+      title: workoutName.trim(),
+      description: workoutDescription,
+      level: difficulty as WorkoutLevel,
+      type: 'TYPICAL' as const,
+      sets: formattedSets,
+    };
   };
 
-  // Удаление упражнения из списка конструктора
-  const handleDeleteSet = (id: number) => {
-    setSets((prevSets) => prevSets.filter((item) => item.id !== id));
+  const handleDeleteSet = (id: string) => {
+    setSets((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Добавление новых сетов из ChooseExerciseModal (Add a Set)
-  const handleAddNewExercises = (selectedExercises: BaseExerciseFromCatalog[]) => {
-    const updatedSets: ExerciseSet[] = selectedExercises.map((ex, index) => ({
-      id: Date.now() + index,
-      name: ex.name,
-      reps: ex.defaultReps,
-      imageUrl: ex.imageUrl,
-      description: "Added from exercise catalog."
+  const handleAddNewExercises = (selectedExercises: { id: string; title: string }[]) => {
+    const updatedSets: LocalExerciseSet[] = selectedExercises.map((ex, index) => ({
+      id: `new-set-${Date.now()}-${index}`,
+      exerciseId: ex.id,
+      name: ex.title,
+      reps: 10,
+      time: 0,
     }));
     setSets((prev) => [...prev, ...updatedSets]);
   };
 
-  // Функция клика по элементу дропдауна сложности
-  const handleSelectDifficulty = (value: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-    setDifficulty(value);
-    setIsDropdownOpen(false); // Закрываем выпадающий список
-  };
+  async function handleSaveChanges() {
+    if (!workoutName.trim()) {
+      alert('Пожалуйста, введите название тренировки.');
+      return;
+    }
+    if (!difficulty) {
+      alert('Пожалуйста, выберите уровень сложности.');
+      return;
+    }
+    if (sets.length === 0) {
+      alert('Добавьте хотя бы одно упражнение в тренировку.');
+      return;
+    }
 
-  // Клик по большой синей кнопке внизу страницы
-  const handleSaveChanges = () => {
-    console.log("=== Инициировано сохранение изменений ===");
-    console.log(`Контекст сохранения: ${challengeId ? `Внутри челленджа ${challengeId}` : 'Общий список воркаутов'}`);
-    console.log(`Новое имя: ${workoutName}, Новая сложность: ${difficulty}`);
-    console.log("Текущий список подходов:", sets);
+    const payload = buildWorkoutPayload(sets);
 
-    // После сохранения отправляем пользователя назад по истории навигации
-    navigate(-1);
-  };
+    try {
+      if (workoutId === 'new') {
+        await workoutService.createWorkout(payload);
+      } else if (workoutId) {
+        await workoutService.updateWorkout(workoutId, payload);
+      }
+      navigate('/workouts');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const serverError = err.response?.data?.message || err.response?.data?.error;
+        alert(`Не удалось сохранить воркаут на сервере. Ошибка: ${serverError || 'Некорректные данные DTO'}`);
+      } else {
+        alert('Произошла непредвиденная ошибка при отправке запроса.');
+      }
+    }
+  }
+
+  if (loading) {
+    return <div className="text-center text-white mt-5">Загрузка тренировки...</div>;
+  }
 
   return (
     <div className={styles['workout-edit-page']}>
       <div className={styles['workout-edit-page__content']}>
-        
         <Header />
 
-        {/* Динамический h2 заголовок в зависимости от контекста пути */}
         <h2 className={styles['workout-edit-page__title']}>
-          {challengeId ? 'Edit Challenge Workout' : 'Edit Workout'}
+          {workoutId === 'new' ? 'Add New Workout' : 'Edit Workout'}
         </h2>
 
-        {/* Панель управления: инпуты, дропдаун и кнопка добавления сета */}
         <div className="row g-0 align-items-center mb-4 px-1 gap-2 gap-sm-3 position-relative">
-          
-          {/* Кнопка-карандаш */}
           <div className="col-auto">
-            <button className={styles['workout-edit-page__edit-icon-btn']}>
+            <div className={styles['workout-edit-page__edit-icon-btn']}>
               <svg viewBox="0 0 24 24" fill="none">
                 <rect width="24" height="24" rx="4" fill="#2563eb" />
                 <path d="M7 17l1.5.3L16 9.8l-2.5-2.5L6 14.8l1 2.2zM12.5 6.3l2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </button>
+            </div>
           </div>
 
-          {/* ИНПУТ: Поле ввода имени воркаута с автоподстановкой */}
           <div className="col col-sm-3">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={workoutName}
               onChange={(e) => setWorkoutName(e.target.value)}
-              placeholder="Workout Name..." 
+              placeholder="Workout Name..."
               className={styles['workout-edit-page__input']}
             />
           </div>
 
-          {/* ИНТЕРАКТИВНЫЙ ВЫПАДАЮЩИЙ ДРОПДАУН СЛОЖНОСТИ */}
           <div className="col col-sm-4 position-relative">
-            <div 
-              className={styles['workout-edit-page__dropdown']}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
+            <div className={styles['workout-edit-page__dropdown']} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
               <span>{difficulty ? difficulty : 'Choose the diff...'}</span>
-              <svg viewBox="0 0 24 24" fill="none" className="ms-2" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                <path d="M7 10l5 5 5-5" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" className="ms-2"><path d="M7 10l5 5 5-5" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
-
-            {/* Выпадающее меню со списком опций сложности пиксель в пиксель */}
             {isDropdownOpen && (
               <div className={styles['dropdown-menu-list']}>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Easy')}>Easy</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Medium')}>Medium</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Hard')}>Hard</div>
-                <div className={styles['dropdown-item-option']} onClick={() => handleSelectDifficulty('Insane')}>Insane</div>
+                {(['EASY', 'MEDIUM', 'HARD', 'INSANE'] as WorkoutLevel[]).map((lvl) => (
+                  <div
+                    key={lvl}
+                    className={styles['dropdown-item-option']}
+                    onClick={() => { setDifficulty(lvl); setIsDropdownOpen(false); }}
+                  >
+                    {lvl}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Кнопка Add a Set */}
           <div className="col-auto ms-auto">
-            <button 
-              className={styles['workout-edit-page__add-set-btn']}
-              onClick={() => setIsChooseModalOpen(true)}
-            >
-              <svg viewBox="0 0 24 24" fill="none" className="me-2">
-                <circle cx="12" cy="12" r="11" fill="#22c55e" />
-                <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
+            <button className={styles['workout-edit-page__add-set-btn']} onClick={() => setIsChooseModalOpen(true)}>
+              <svg viewBox="0 0 24 24" fill="none" className="me-2"><circle cx="12" cy="12" r="11" fill="#22c55e" /><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>
               Add a Set
             </button>
           </div>
         </div>
 
-        {/* Список подходов */}
         <div className="d-flex flex-column gap-3 mb-4">
           {sets.map((set) => (
             <div key={set.id} className={styles['exercise-card']}>
               <div className="row g-0 align-items-center w-full h-100">
                 <div className="col-auto h-100">
                   <div className={styles['exercise-card__image-wrapper']}>
-                    <img src={set.imageUrl} alt={set.name} />
+                    <img src="/placeholder.png" alt={set.name} />
                   </div>
                 </div>
                 <div className="col ps-3 d-flex flex-column justify-content-center">
                   <h3 className={styles['exercise-card__name']}>{set.name}</h3>
-                  <span className={styles['exercise-card__reps']}>x{set.reps}</span>
+                  <span className={styles['exercise-card__reps']}>
+                    {set.time > 0 ? `${set.time} s.` : `x${set.reps}`}
+                  </span>
                 </div>
                 <div className="col-auto pe-3 d-flex align-items-center gap-2">
                   <button className={styles['exercise-card__action-btn']} onClick={() => handleDeleteSet(set.id)}>
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="#fca5a5" />
-                      <path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#fca5a5" /><path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" /></svg>
                   </button>
                   <button className={styles['exercise-card__action-btn']} onClick={() => setActiveSet(set)}>
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="#2563eb" />
-                      <circle cx="8" cy="12" r="1" fill="white" />
-                      <circle cx="12" cy="12" r="1" fill="white" />
-                      <circle cx="16" cy="12" r="1" fill="white" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#2563eb" /><circle cx="8" cy="12" r="1" fill="white" /><circle cx="12" cy="12" r="1" fill="white" /><circle cx="16" cy="12" r="1" fill="white" /></svg>
                   </button>
                 </div>
               </div>
@@ -212,34 +229,51 @@ export const SingleWorkoutEditAddPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Кнопка сохранения изменений на странице */}
-        <button 
-          className={styles['workout-edit-page__save-btn']}
-          onClick={handleSaveChanges}
-        >
+        <button className={styles['workout-edit-page__save-btn']} onClick={handleSaveChanges}>
           Save Changes
         </button>
-
       </div>
 
-      {/* Модалка 1: Детальное изменение reps у сета (три точки) */}
-      <ExerciseModal 
+      <ExerciseModal
         isOpen={activeSet !== null}
         onClose={() => setActiveSet(null)}
-        onSave={(updatedData) => handleSaveReps(updatedData.reps)}
+        exerciseId={activeSet?.exerciseId}
         exerciseName={activeSet?.name || ''}
         initialReps={activeSet?.reps || 0}
-        description={activeSet?.description || ''}
-        videoThumbnail={activeSet?.imageUrl}
+        initialTime={activeSet?.time || 0}
+        onSave={async (updatedData) => {
+          if (!activeSet) {
+            throw new Error('Missing set data');
+          }
+
+          const nextSets = sets.map((item) =>
+            item.id === activeSet.id
+              ? {
+                ...item,
+                reps: updatedData.mode === 'reps' ? Number(updatedData.reps) : 0,
+                time: updatedData.mode === 'time' ? Number(updatedData.time) : 0,
+              }
+              : item
+          );
+
+          setSets(nextSets);
+
+          if (workoutId && workoutId !== 'new') {
+            if (!difficulty) {
+              alert('Пожалуйста, выберите уровень сложности.');
+              throw new Error('Missing difficulty');
+            }
+
+            const updatedWorkout = await workoutService.updateWorkout(
+              workoutId,
+              buildWorkoutPayload(nextSets)
+            );
+            setSets(mapWorkoutSetsToLocal(updatedWorkout.sets));
+          }
+        }}
       />
 
-      {/* Модалка 2: Выбор новых упражнений каталога (Add a Set) */}
-      <ChooseExerciseModal 
-        isOpen={isChooseModalOpen}
-        onClose={() => setIsChooseModalOpen(false)}
-        onAddExercises={handleAddNewExercises}
-      />
-
+      <ChooseExerciseModal isOpen={isChooseModalOpen} onClose={() => setIsChooseModalOpen(false)} onAddExercises={handleAddNewExercises} />
       <Footer />
     </div>
   );

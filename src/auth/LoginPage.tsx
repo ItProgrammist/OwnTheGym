@@ -1,50 +1,91 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './scss/AuthPages.module.scss';
 import { Header } from '../components/Header';
+import { api, type LoginRegisterResponse } from '../api/authService';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('ownthegym_username', username);
-    navigate('/');
+    setError(null);
+
+    try {
+      // 1. Отправляем запрос авторизации по Email по схеме бэкенда
+      const response = await api.post<LoginRegisterResponse>('/auth/login', {
+        email: email.trim(),
+        password
+      });
+
+      if (response.data?.accessToken) {
+        localStorage.setItem('ownthegym_token', response.data.accessToken);
+
+        const meResponse = await api.get('/auth/me');
+        localStorage.setItem('ownthegym_username', meResponse.data.username);
+
+        navigate('/');
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        // Извлекаем сообщение об ошибке, возвращенное бэкендом
+        const serverData = err.response?.data as { message?: string; error?: string };
+        const backendMessage = serverData?.message || serverData?.error;
+
+        // Валидированная русская интерпретация ответов сервера
+        if (err.response?.status === 401 || err.response?.status === 404) {
+          setError('Неверный Email или пароль. Пожалуйста, проверьте введённые данные.');
+        } else if (backendMessage) {
+          setError(`Ошибка авторизации: ${backendMessage}`);
+        } else {
+          setError('Не удалось связаться с сервером. Повторите попытку позже.');
+        }
+      } else {
+        setError('Произошла непредвиденная ошибка при входе.');
+      }
+    }
   };
 
   return (
     <div className={styles['auth-page']}>
-      
+
       {/* Контейнер хедера над формой */}
       <div className={styles['auth-page__header-wrapper']}>
         <Header hideAuth={true} />
       </div>
 
-      {/* Контейнер формы */}
+      {/* Контейнер формы авторизации */}
       <div className={styles['auth-page__container']}>
         <form onSubmit={handleLoginSubmit} className="d-flex flex-column gap-3 w-100">
           <h2 className={styles['auth-page__title']}>Sign In</h2>
 
+          {/* Плашка вывода ошибки валидации бэка */}
+          {error && <div className="alert alert-danger py-2 small mb-0">{error}</div>}
+
+          {/* Инпут ввода Email */}
           <div className="position-relative">
             <input
-              type="text"
-              placeholder="Username..."
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              placeholder="Email address..."
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className={styles['auth-input']}
               required
             />
             <span className={styles['auth-input__icon']}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
               </svg>
             </span>
           </div>
 
+          {/* Инпут ввода Пароля */}
           <div className="position-relative">
             <input
               type="password"
@@ -67,6 +108,7 @@ export const LoginPage: React.FC = () => {
           </button>
         </form>
 
+        {/* Ссылка на переключение формы */}
         <div className={styles['auth-page__switch-text']}>
           Don't have an account?{' '}
           <span onClick={() => navigate('/register')}>Sign Up</span>

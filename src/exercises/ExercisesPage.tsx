@@ -1,133 +1,82 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import styles from './scss/ExercisesPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { ExerciseModal } from '../components/ExerciseModal';
-
-interface GlobalExerciseItem {
-  id: string;
-  name: string;
-  imageUrl: string;
-  reps: number;
-  description: string;
-}
+import { UpsertExerciseModal } from '../components/UpsertExerciseModal';
+import { workoutService, type ExerciseResponse, type ExerciseRequest } from '../api/workoutService';
 
 export const ExercisesPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Состояние для открытия модалки и хранения выбранного объекта
+  const [exercises, setExercises] = useState<ExerciseResponse[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Стейты управления универсальным модальным окном
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedExercise, setSelectedExercise] = useState<GlobalExerciseItem | null>(null);
+  const [editingExercise, setEditingExercise] = useState<ExerciseResponse | null>(null);
 
-  // Список доступных глобальных упражнений в базе с дефолтными данными
-  const [exercises, setExercises] = useState<GlobalExerciseItem[]>([
-    {
-      id: 'ex-1',
-      name: 'Biceps curls with expander',
-      imageUrl: 'https://unsplash.com',
-      reps: 25,
-      description: "This exercise is a real beast. You don't have to worry about your spine so much, it focuses only on biceps."
-    },
-    {
-      id: 'ex-2',
-      name: 'Hammer curls',
-      imageUrl: 'https://unsplash.com',
-      reps: 20,
-      description: "Great for building forearm and brachialis thickness. Keep your elbows pinned!"
-    },
-    {
-      id: 'ex-3',
-      name: 'Concentration curls',
-      imageUrl: 'https://unsplash.com',
-      reps: 15,
-      description: "Isolates the biceps peak perfectly. Sit down and rest your elbow against your thigh."
-    },
-  ]);
+  async function loadExercises() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await workoutService.getAllExercises();
+      setExercises(Array.isArray(data) ? data : []);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError('Не удалось загрузить каталог упражнений.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const filteredExercises = exercises.filter((ex) =>
-    ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    loadExercises();
+  }, []);
 
-  // Открытие модалки для редактирования существующего упражнения
-  const handleOpenDetails = (exercise: GlobalExerciseItem) => {
-    setSelectedExercise(exercise);
-    setIsModalOpen(true);
-  };
-
-  // Открытие модалки для создания НОВОГО упражнения
   const handleOpenCreateModal = () => {
-    setSelectedExercise(null); // Явно зануляем объект, чтобы модалка открылась пустой
+    setEditingExercise(null);
     setIsModalOpen(true);
   };
 
-  const handleDeleteGlobalExercise = (id: string) => {
-    setExercises((prev) => prev.filter((ex) => ex.id !== id));
+  const handleOpenEditModal = (exercise: ExerciseResponse) => {
+    setEditingExercise(exercise);
+    setIsModalOpen(true);
   };
 
-  // Функция сохранения (умеет и обновлять, и создавать)
-  const handleSaveExerciseData = (updatedData: { name: string; reps: number; description: string }) => {
-    if (selectedExercise) {
-      // РЕЖИМ РЕДАКТИРОВАНИЯ: обновляем поля в существующем элементе
-      setExercises((prev) =>
-        prev.map((ex) =>
-          ex.id === selectedExercise.id
-            ? { 
-                ...ex, 
-                name: updatedData.name, 
-                reps: updatedData.reps, 
-                description: updatedData.description 
-              }
-            : ex
-        )
-      );
+  const handleDeleteExercise = async (id: string) => {
+    if (!window.confirm('Удалить это упражнение из каталога бэкенда?')) return;
+    try {
+      await workoutService.deleteExercise(id);
+      setExercises((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      alert('Ошибка при удалении.');
+    }
+  };
+
+  const handleSaveExercise = async (payload: ExerciseRequest) => {
+    if (editingExercise) {
+      const updatedData = await workoutService.updateExercise(editingExercise.id, payload);
+      setExercises((prev) => prev.map((item) => (item.id === editingExercise.id ? updatedData : item)));
     } else {
-      // РЕЖИМ СОЗДАНИЯ: собираем новый объект и добавляем в массив
-      const newExercise: GlobalExerciseItem = {
-        id: `ex-${Date.now()}`, // Генерируем уникальный строковый ID
-        name: updatedData.name || 'Unnamed Exercise',
-        imageUrl: 'https://unsplash.com', // Дефолтное изображение заглушки
-        reps: updatedData.reps || 0,
-        description: updatedData.description || ''
-      };
-      
-      setExercises((prev) => [...prev, newExercise]);
+      const newData = await workoutService.createExercise(payload);
+      setExercises((prev) => [...prev, newData]);
     }
   };
 
   return (
     <div className={styles['exercises-page']}>
       <div className={styles['exercises-page__content']}>
-        
         <Header />
 
-        <div className="row g-0 align-items-center justify-content-between mb-4 px-1 gap-2">
+        <div className="row g-0 align-items-center justify-content-between mb-4 px-1">
           <div className="col-auto">
             <h2 className={styles['exercises-page__title']}>Exercises</h2>
           </div>
-          
-          <div className="col col-sm-4 position-relative">
-            <input 
-              type="text" 
-              placeholder="Search an exercise..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles['exercises-page__search-input']}
-            />
-            <span className={styles['exercises-page__search-icon']}>
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="11" cy="11" r="6" stroke="#3b82f6" strokeWidth="2.5"/>
-                <path d="M16 16l4 4" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
-            </span>
-          </div>
-
-          {/* ИСПРАВЛЕНО: Кнопка Add теперь имеет обработчик onClick и вызывает handleOpenCreateModal */}
           <div className="col-auto">
-            <button 
-              className={styles['exercises-page__add-btn']}
-              onClick={handleOpenCreateModal}
-            >
+            <button className={styles['exercises-page__add-btn']} onClick={handleOpenCreateModal}>
               <svg viewBox="0 0 24 24" fill="none" className="me-2">
                 <circle cx="12" cy="12" r="11" fill="#22c55e" />
                 <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -137,37 +86,39 @@ export const ExercisesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Список карточек */}
+        {loading && <div className="text-center text-white mt-4">Загрузка каталога...</div>}
+        {error && <div className="alert alert-danger py-2 small">{error}</div>}
+
+        {!loading && !error && exercises.length === 0 && (
+          <div className="text-center text-muted mt-4">Каталог упражнений на сервере пока пуст.</div>
+        )}
+
         <div className="d-flex flex-column gap-3">
-          {filteredExercises.map((exercise) => (
-            <div key={exercise.id} className={styles['exercise-row']}>
+          {exercises.map((item) => (
+            <div key={item.id} className={styles['exercise-row']}>
               <div className="row g-0 align-items-center w-full h-100">
-                
                 <div className="col-auto h-100">
                   <div className={styles['exercise-row__image-wrapper']}>
-                    <img src={exercise.imageUrl} alt={exercise.name} />
+                    <img src="/placeholder.png" alt={item.title} />
                   </div>
                 </div>
 
-                <div className="col ps-3 d-flex align-items-center">
-                  <h3 className={styles['exercise-row__name']}>{exercise.name}</h3>
+                <div className="col ps-3 d-flex flex-column justify-content-center text-start">
+                  <h3 className={styles['exercise-row__name']}>{item.title}</h3>
+                  <p className={styles['exercise-row__desc']}>{item.description || 'Нет описания техники'}</p>
                 </div>
 
                 <div className="col-auto pe-3 d-flex align-items-center gap-2">
-                  <button 
-                    className={styles['exercise-row__action-btn']}
-                    onClick={() => handleDeleteGlobalExercise(exercise.id)}
-                  >
+                  {/* Крестик удаления */}
+                  <button className={styles['exercise-row__action-btn']} onClick={() => handleDeleteExercise(item.id)}>
                     <svg viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" fill="#fca5a5" />
                       <path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   </button>
 
-                  <button 
-                    className={styles['exercise-row__action-btn']}
-                    onClick={() => handleOpenDetails(exercise)}
-                  >
+                  {/* ИСПРАВЛЕНО: Теперь на плашке выводится ТОЛЬКО ОДНА ИКОНКА «ТРИ ТОЧКИ», которая сразу открывает редактирование */}
+                  <button className={styles['exercise-row__action-btn']} onClick={() => handleOpenEditModal(item)}>
                     <svg viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" fill="#2563eb" />
                       <circle cx="8" cy="12" r="1" fill="white" />
@@ -175,7 +126,6 @@ export const ExercisesPage: React.FC = () => {
                       <circle cx="16" cy="12" r="1" fill="white" />
                     </svg>
                   </button>
-
                 </div>
               </div>
             </div>
@@ -183,15 +133,13 @@ export const ExercisesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Подключаем модалку вниз страницы */}
-      <ExerciseModal 
+      {/* Наше новое универсальное окно создания/редактирования */}
+      <UpsertExerciseModal
+        key={editingExercise ? editingExercise.id : 'new-exercise'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveExerciseData}
-        exerciseName={selectedExercise?.name || ''} // Если создаем новое, подставится пустая строка
-        initialReps={selectedExercise?.reps || 0}   // Если создаем новое, подставится 0
-        description={selectedExercise?.description || ''}
-        videoThumbnail={selectedExercise?.imageUrl || 'https://unsplash.com'}
+        onSave={handleSaveExercise}
+        exercise={editingExercise}
       />
 
       <Footer />
