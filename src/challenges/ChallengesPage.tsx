@@ -166,7 +166,7 @@ export const ChallengesPage: React.FC = () => {
                               console.log('Детали ошибки от Spring Boot (Data):', err.response?.data);
 
                               const serverMessage = err.response?.data?.message || err.response?.data?.error;
-                              alert(`Не удалось удалить: ${serverMessage || 'Ошибка формата запроса'}`);
+                              alert(`Не удалось удалить: ${serverMessage || 'Ошибка формата запроса'}. Скорее всего челлендж уже записан в историю выполненных.`);
                             } else {
                               alert('Произошла непредвиденная ошибка сети.');
                             }

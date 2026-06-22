@@ -88,7 +88,7 @@ export const Workouts: React.FC = () => {
             await workoutService.deleteWorkout(id);
             setWorkouts((prev) => prev.filter((w) => w?.id !== id));
         } catch (err: unknown) {
-            alert('Ошибка при удалении тренировки на сервере.');
+            alert('Ошибка при удалении тренировки на сервере. Скорее всего они уже были выполнены и записаны в историю выполненных тренировок.');
         }
     }
 
