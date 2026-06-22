@@ -212,7 +212,7 @@ export const MainPage: React.FC = () => {
               </div>
 
               {/* Сетка заголовков дней недели строго MON-SUN */}
-              <div className="row g-0 text-center mb-2 fw-bold text-muted small" style={{ fontSize: '10px', color: '#777777' }}>
+              <div className="row g-0 text-center mb-2 fw-bold small" style={{ fontSize: '10px', color: 'grey' }}>
                 {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((d) => <div key={d} className="col">{d}</div>)}
               </div>
 
@@ -252,7 +252,7 @@ export const MainPage: React.FC = () => {
 
         {/* Нижний дефолтный блок */}
         <div className="w-100 d-flex flex-column gap-3 text-start px-1 mt-2">
-          <p className="text-muted small m-0">Выберите раздел в меню навигации, чтобы начать тренировочную сессию.</p>
+          <p className="text-center small m-0"  style={{color: 'grey' }}>Выберите раздел в меню навигации, чтобы начать тренировочную сессию.</p>
         </div>
 
       </div>

@@ -75,14 +75,14 @@ export const ChallengesPage: React.FC = () => {
         </div>
 
         {/* Индикаторы загрузки и сетевых ошибок */}
-        {loading && <div className="text-center text-muted my-4 fs-5">Загрузка активных испытаний...</div>}
+        {loading && <div className="text-center my-4 fs-5" style={{ color: 'grey' }}>Загрузка активных испытаний...</div>}
         {error && <div className="alert alert-danger w-100 py-2 rounded-3 small border-0 text-center">{error}</div>}
 
         {/* Состояние пустого списка */}
         {!loading && !error && challenges.length === 0 && (
           <div className="text-center text-secondary py-5">
             <p className="m-0">Глобальные челленджи пока отсутствуют на сервере.</p>
-            <span className="small text-muted">Нажмите кнопку Add, чтобы создать первое испытание.</span>
+            <span className="small"  style={{ color: 'grey' }}>Нажмите кнопку Add, чтобы создать первое испытание.</span>
           </div>
         )}
 

@@ -151,23 +151,23 @@ export const ChallengeEditAddPage: React.FC = () => {
 
                 <form onSubmit={handleSaveChallenge} className="w-100 d-flex flex-column gap-3 mb-5">
                     <div className="text-start">
-                        <label className="form-label small text-muted fw-bold">CHALLENGE TITLE</label>
+                        <label className="form-label small fw-bold">CHALLENGE TITLE</label>
                         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Challenge name..." className="form-control border-0 p-3 text-white" style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem' }} required />
                     </div>
 
                     <div className="text-start">
-                        <label className="form-label small text-muted fw-bold">DESCRIPTION</label>
+                        <label className="form-label small fw-bold">DESCRIPTION</label>
                         <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this challenge about?..." className="form-control border-0 p-3 text-white" rows={3} style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem', resize: 'none' }} required />
                     </div>
 
                     <div className="text-start">
-                        <label className="form-label small text-muted fw-bold">IMAGE URL</label>
-                        <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste link to image..." className="form-control border-0 p-3 text-white" style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem' }} />
+                        <label className="form-label small fw-bold">IMAGE URL</label>
+                        <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste link to image..." className="form-control border-0 p-3 text-white" style={{ backgroundColor: '#2d2d2d', borderRadius: '0.75rem', color: "grey" }} />
                     </div>
 
                     <div className="text-start mt-3 w-100">
                         <div className="d-flex align-items-center justify-content-between mb-2">
-                            <label className="form-label small text-muted fw-bold m-0">ATTACH SPECIAL WORKOUTS</label>
+                            <label className="form-label small  fw-bold m-0">ATTACH SPECIAL WORKOUTS</label>
                             <button type="button" className="btn btn-sm btn-outline-primary px-3 rounded-pill" onClick={handleCreateNewSpecialWorkout} style={{ fontSize: '12px', fontWeight: 600 }}>
                                 + New Special Workout
                             </button>
@@ -176,7 +176,7 @@ export const ChallengeEditAddPage: React.FC = () => {
                         {loading && <div className="text-muted small py-2">Загрузка доступных SPECIAL тренировок...</div>}
 
                         {!loading && availableSpecialWorkouts.length === 0 && (
-                            <div className="text-muted small py-4 text-center border border-secondary border-dashed rounded-3" style={{ borderStyle: 'dashed' }}>
+                            <div className=" small py-4 text-center border border-secondary border-dashed rounded-3" style={{ borderStyle: 'dashed', color: 'grey' }}>
                                 В базе данных бэка пока нет тренировок с типом SPECIAL.
                             </div>
                         )}
