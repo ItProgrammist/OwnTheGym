@@ -15,37 +15,37 @@ export default defineConfig({
       // Каждый раз, когда фронтенд отправляет запрос на /auth или /api, 
       // Vite будет прозрачно перенаправлять его на бэкенд 5050
       '/auth': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/exercises': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/api': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/workouts': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/statistics': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/calendar': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
       '/challenges': {
-        target: 'https://ownthegymapi.onrender.com/swagger-ui/index.html#/',
+        target: 'https://ownthegymapi.onrender.com/',
         changeOrigin: true,
         secure: false,
       },
