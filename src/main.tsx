@@ -29,7 +29,7 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Импорт стилей Bootstrap
-import 'bootstrap/dist/css/bootstrap.min.css';
+// import 'bootstrap/dist/css/bootstrap.min.css';
 
 const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
