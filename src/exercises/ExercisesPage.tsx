@@ -52,7 +52,7 @@ export const ExercisesPage: React.FC = () => {
       await workoutService.deleteExercise(id);
       setExercises((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      alert('Ошибка при удалении.');
+      alert('Ошибка при удалении. Это упражнение уже используется в тренировке(-ках)');
     }
   };
 
