@@ -123,7 +123,7 @@ export const ChallengeEditAddPage: React.FC = () => {
             if (axios.isAxiosError(err)) {
                 console.log('Ответ сервера с ошибкой:', err.response?.data);
                 const serverError = err.response?.data?.message || err.response?.data?.error;
-                alert(`Не удалось сохранить челлендж. Ошибка сервера: ${serverError || 'Некорректный DTO'}`);
+                alert(`Не удалось сохранить челлендж. Ошибка сервера: ${serverError || 'Нельзя создать челлендж без тренировок'}`);
             } else {
                 alert('Произошла непредвиденная ошибка сети.');
             }
