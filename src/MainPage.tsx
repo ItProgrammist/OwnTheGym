@@ -7,7 +7,7 @@ import { Footer } from './components/Footer';
 import { workoutService } from './api/workoutService';
 
 interface LocalCalendarEntry {
-  day: string; 
+  day: string;
   type: 'WORKOUT' | 'CHALLENGE';
 }
 
@@ -21,22 +21,22 @@ interface CalendarWeekResponse {
 }
 
 interface DayColumn {
-  label: string;      
-  dateStr: string;    
-  dayNumber: number;  
+  label: string;
+  dateStr: string;
+  dayNumber: number;
 }
 
 export const MainPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Раздельные массивы для двух эндпоинтов сервера
   const [weekEntries, setWeekEntries] = useState<LocalCalendarEntry[]>([]);
   const [monthEntries, setMonthEntries] = useState<LocalCalendarEntry[]>([]);
-  
+
   const [weekDays, setWeekDays] = useState<DayColumn[]>([]);
   const [isFullCalendarOpen, setIsFullCalendarOpen] = useState<boolean>(false);
-  
-  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth()); 
+
+  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
   const monthsList = [
@@ -54,8 +54,8 @@ export const MainPage: React.FC = () => {
   useEffect(() => {
     const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const current = new Date();
-    
-    let dayOfWeek = current.getDay(); 
+
+    let dayOfWeek = current.getDay();
     let distanceToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
     const monday = new Date(current);
@@ -105,11 +105,10 @@ export const MainPage: React.FC = () => {
       .catch((err) => console.error('Ошибка загрузки месяца:', err));
   }, [currentMonth, currentYear]);
 
-  // 4. Матрица дней для сетки месяца
   const gridDays = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
-    let startDayOfWeek = firstDay.getDay() - 1; 
-    if (startDayOfWeek === -1) startDayOfWeek = 6; 
+    let startDayOfWeek = firstDay.getDay() - 1;
+    if (startDayOfWeek === -1) startDayOfWeek = 6;
 
     const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
     const daysArray = [];
@@ -145,7 +144,7 @@ export const MainPage: React.FC = () => {
     }
   };
 
-    return (
+  return (
     <div className={styles['main-page']} style={{ backgroundColor: '#1a1a1a', fontFamily: 'sans-serif', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column' }}>
       <div className="container flex-grow-1 py-4 px-3 d-flex flex-column align-items-center" style={{ maxWidth: '640px' }}>
         <Header />
@@ -154,8 +153,8 @@ export const MainPage: React.FC = () => {
         <div className="w-100 mb-4 mt-3 px-1">
           <div className="d-flex align-items-center justify-content-between mb-3 w-100">
             <h2 className="fs-4 fw-bold m-0 text-white" style={{ letterSpacing: '0.01em' }}>History</h2>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btn-link p-0 border-0 text-decoration-none fw-bold"
               style={{ color: '#3b82f6', fontSize: '0.9rem' }}
               onClick={() => setIsFullCalendarOpen(true)}
@@ -195,7 +194,7 @@ export const MainPage: React.FC = () => {
         {isFullCalendarOpen && (
           <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 99999, backdropFilter: 'blur(3px)' }}>
             <div className="w-100 p-4 rounded-4 shadow-lg text-white" style={{ backgroundColor: '#2d2d2d', maxWidth: '440px' }}>
-              
+
               {/* Навигация месяца (Стрелочки + Выпадающие списки выбора) */}
               <div className="d-flex align-items-center mb-4 gap-2 w-100">
                 <button type="button" className="btn btn-transparent p-1 text-primary border-0 fw-bold fs-4" onClick={handlePrevMonth} style={{ color: '#3b82f6' }}>‹</button>
@@ -217,22 +216,43 @@ export const MainPage: React.FC = () => {
               </div>
 
               {/* Дни месяца с синими и золотыми галочками выполнения */}
-              <div className="row g-0 text-center row-gap-3 mb-4">
+              <div className="d-flex flex-wrap text-center row-gap-3 mb-4 w-100">
                 {gridDays.map((day, idx) => {
-                  if (!day) return <div key={`empty-${idx}`} className="col" style={{ minWidth: '14.28%' }}></div>;
+                  if (!day) {
+                    return (
+                      <div
+                        key={`empty-${idx}`}
+                        style={{ width: '14.285%', minHeight: '2.2rem' }}
+                      />
+                    );
+                  }
 
                   const dayRecords = monthEntries.filter((e) => e.day && e.day.startsWith(day.dateStr));
                   const hasChallenge = dayRecords.some((e) => e.type === 'CHALLENGE');
                   const hasWorkout = dayRecords.some((e) => e.type === 'WORKOUT');
 
                   return (
-                    <div key={day.dateStr} className="col d-flex align-items-center justify-content-center" style={{ minWidth: '14.28%', minHeight: '2.2rem' }}>
+                    /* ИСПРАВЛЕНО: Заменен класс col на жесткую флекс-долю 14.285% */
+                    <div
+                      key={day.dateStr}
+                      className="d-flex align-items-center justify-content-center position-relative"
+                      style={{ width: '14.285%', minHeight: '2.2rem' }}
+                    >
                       {hasChallenge ? (
-                        <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.6rem', height: '1.6rem' }}><circle cx="12" cy="12" r="11" fill="#eab308" /><path d="M8 12l3 3 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.6rem', height: '1.6rem' }}>
+                          <circle cx="12" cy="12" r="11" fill="#eab308" />
+                          <path d="M8 12l3 3 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       ) : hasWorkout ? (
-                        <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.6rem', height: '1.6rem' }}><circle cx="12" cy="12" r="11" fill="#2563eb" /><path d="M8 12l3 3 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.6rem', height: '1.6rem' }}>
+                          <circle cx="12" cy="12" r="11" fill="#2563eb" />
+                          <path d="M8 12l3 3 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       ) : (
-                        <div className="d-flex align-items-center justify-content-center text-white fw-bold rounded-circle" style={{ width: '1.85rem', height: '1.85rem', backgroundColor: '#1a1a1a', fontSize: '13px' }}>
+                        <div
+                          className="d-flex align-items-center justify-content-center text-white fw-bold rounded-circle"
+                          style={{ width: '1.85rem', height: '1.85rem', backgroundColor: '#1a1a1a', fontSize: '13px' }}
+                        >
                           {day.dayNumber}
                         </div>
                       )}
@@ -252,7 +272,7 @@ export const MainPage: React.FC = () => {
 
         {/* Нижний дефолтный блок */}
         <div className="w-100 d-flex flex-column gap-3 text-start px-1 mt-2">
-          <p className="text-center small m-0"  style={{color: 'grey' }}>Выберите раздел в меню навигации, чтобы начать тренировочную сессию.</p>
+          <p className="text-center small m-0" style={{ color: 'grey' }}>Выберите раздел в меню навигации, чтобы начать тренировочную сессию.</p>
         </div>
 
       </div>

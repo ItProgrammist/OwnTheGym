@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
   const [username, setUsername] = useState<string | null>(() => localStorage.getItem('ownthegym_username'));
 
   const handleLogout = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Отключаем переход на статистику при клике на Выйти
+    e.stopPropagation();
     localStorage.removeItem('ownthegym_token');
     localStorage.removeItem('ownthegym_username');
     setUsername(null);

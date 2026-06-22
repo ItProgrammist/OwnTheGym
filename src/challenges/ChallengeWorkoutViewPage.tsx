@@ -15,7 +15,6 @@ interface ChallengeExerciseSet {
   description: string;
 }
 
-// Интерфейс для строгого соответствия типов из каталога (убираем any)
 interface CatalogExerciseItem {
   id: string;
   name: string;
@@ -40,13 +39,10 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
 
   const workoutTitle = routerState?.workout?.title || "Full Arms";
 
-  // Стейт для модального окна РЕДАКТИРОВАНИЯ повторений (три точки)
   const [activeSet, setActiveSet] = useState<ChallengeExerciseSet | null>(null);
 
-  // 2. Стейт для модального окна ВЫБОРА новых упражнений из каталога
   const [isChooseModalOpen, setIsChooseModalOpen] = useState<boolean>(false);
 
-  // Основной стейт списка подходов упражнений
   const [exerciseSets, setExerciseSets] = useState<ChallengeExerciseSet[]>([
     {
       id: 'ch-ex-1',
@@ -71,10 +67,9 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
     },
   ]);
 
-  // 3. Функция, которая принимает выбранные из каталога упражнения и пушит их в тренировку челленджа
   const handleAddExercisesFromCatalog = (selectedExercises: CatalogExerciseItem[]) => {
     const newSets: ChallengeExerciseSet[] = selectedExercises.map((ex, index) => ({
-      id: `ch-ex-${Date.now()}-${index}`, // Генерация уникального ID
+      id: `ch-ex-${Date.now()}-${index}`,
       name: ex.name,
       imageUrl: ex.imageUrl,
       reps: ex.defaultReps,
@@ -89,7 +84,6 @@ export const ChallengeWorkoutViewPage: React.FC = () => {
     setExerciseSets((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Функция сохранения измененного количества повторений из модалки редактирования
   const handleSaveReps = (newReps: number) => {
     if (!activeSet) return;
 

@@ -45,10 +45,11 @@ export default defineConfig({
         secure: false,
       },
       '/challenges': {
-        target: 'https://ownthegymapi.onrender.com/',
+        target: 'https://ownthegymapi.onrender.com/', // Без trailing-слеша на конце!
         changeOrigin: true,
         secure: false,
-      },
+        ws: true, // Включает проброс заголовков для сложных HTTP-методов
+      }, 
     },
   },
 })

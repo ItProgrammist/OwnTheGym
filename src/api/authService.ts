@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import axios from 'axios';
 
-// ИСПРАВЛЕНО: Используем относительный путь для работы через прокси Vite.
-// Если прокси не подхватился, браузер отправит запрос на /auth относительно фронтенда,
-// что позволит Vite перехватить его.
+// юзаем относительный путь для работы через прокси Vite.
+// и если прокси не подхватился, браузер отправит запрос на /auth относительно фронтенда,
+// это позволит Vite перехватить его.
 export const api = axios.create({
-  baseURL: 'https://ownthegymapi.onrender.com/', 
+  baseURL: '', 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Автоматически прикрепляем JWT-токен к каждому запросу (например, для /auth/me)
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('ownthegym_token');
     if (token && config.headers) {

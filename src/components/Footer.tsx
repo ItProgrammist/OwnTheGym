@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom'; // Импортируем Link и хук для отслеживания активного роута
+import { Link, useLocation } from 'react-router-dom';
 import styles from './scss/Footer.module.scss';
 
 export const Footer: React.FC = () => {
-  const location = useLocation(); // Получаем текущий путь (например, "/" или "/workouts")
+  const location = useLocation();
 
-  // Функция для проверки, активна ли ссылка (чтобы можно было подсвечивать иконки)
   const isActive = (path: string) => location.pathname === path;
 
   return (

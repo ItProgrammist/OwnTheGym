@@ -22,7 +22,7 @@ $color-btn-close: #93c5fd;
   background-color: $bg-modal;
   border-radius: 1.5rem;
   width: 100%;
-  max-width: 440px; // Фиксированная ширина, чтобы 7 кружков идеально вставали в ряд
+  max-width: 440px;
   padding: 1.75rem 1.25rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   color: $text-white;
@@ -61,7 +61,6 @@ $color-btn-close: #93c5fd;
   }
 }
 
-// Подписи дней недель (Mon, Tue...)
 .calendar-weekday-label {
   font-size: 0.8125rem;
   font-weight: 700;
@@ -70,7 +69,6 @@ $color-btn-close: #93c5fd;
   letter-spacing: 0.05em;
 }
 
-// КРУЖОЧКИ ДНЕЙ (Зафиксированные размеры, предотвращающие вертикальное вытягивание)
 .calendar-day-circle {
   width: 2.35rem;
   height: 2.35rem;
@@ -102,7 +100,6 @@ $color-btn-close: #93c5fd;
   }
 }
 
-// Заглушка для пустых дней начала месяца
 .calendar-day-circle-empty {
   width: 2.35rem;
   height: 2.35rem;

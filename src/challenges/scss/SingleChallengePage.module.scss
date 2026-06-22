@@ -53,19 +53,18 @@ $diff-insane: #a855f7; // Пурпурный
   }
 }
 
-// Горизонтальные плашки тренировок челленджа
 .challenge-workout {
   background-color: $bg-card-alt;
   border-radius: 1.25rem;
-  height: 5.5rem; // Фиксированная высота плашки один в один по макету
+  height: 5.5rem;
   overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.02);
   transition: background-color 0.15s ease;
-  margin-bottom: 1rem; // Отступ между плашками в списке
+  margin-bottom: 1rem;
 
   &:hover {
-    background-color: #505050; // Эффект наведения
+    background-color: #505050;
   }
 
   &__image-wrapper {
@@ -95,7 +94,6 @@ $diff-insane: #a855f7; // Пурпурный
     margin: 0;
   }
 
-  // Специфичные хэшированные цвета уровней сложности
   &__difficulty {
     &--medium { color: $diff-medium; }
     &--hard   { color: $diff-hard; }

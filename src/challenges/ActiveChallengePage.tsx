@@ -41,8 +41,6 @@ export const ActiveChallengePage: React.FC = () => {
   const [exerciseDescription, setExerciseDescription] = useState<string>('');
   const [exerciseVideoUrl, setExerciseVideoUrl] = useState<string>('');
 
-  // ИСПРАВЛЕНО НА 100%: Асинхронно дозапрашиваем полные воркауты с бэка, 
-  // полностью побеждая Lazy Loading и собирая ВСЕ упражнения челленджа подряд!
   useEffect(() => {
     if (incomingChallenge && incomingChallenge.workouts) {
       async function assembleFlattenedSteps() {
@@ -53,15 +51,13 @@ export const ActiveChallengePage: React.FC = () => {
           for (const wk of incomingChallenge.workouts) {
             if (!wk || !wk.id) continue;
 
-            // Принудительно вытягиваем полную тренировку с сервера по её UUID,
-            // чтобы гарантированно получить заполненный массив сетов (sets) с упражнениями!
             const fullWorkout = await workoutService.getWorkoutById(wk.id);
 
             if (fullWorkout && fullWorkout.sets) {
               fullWorkout.sets.forEach((s: any) => {
                 flatList.push({
                   workoutId: fullWorkout.id,
-                  workoutTitle: fullWorkout.title, // Название для верхнего заголовка
+                  workoutTitle: fullWorkout.title,
                   exerciseId: s.exerciseId,
                   exerciseTitle: s.exerciseTitle,
                   numberOfReps: s.numberOfReps || 0,
@@ -176,7 +172,6 @@ export const ActiveChallengePage: React.FC = () => {
     return <div className="text-center text-white mt-5">Загрузка программы челленджа...</div>;
   }
 
-  // ИСПРАВЛЕНО: Защищаем страницу от падения, если массив шагов еще пуст при первом рендере
   const currentStep = flattenedSteps[currentSetIndex] || null;
   const isLastSet = flattenedSteps.length > 0 ? (currentSetIndex === flattenedSteps.length - 1) : true;
 
@@ -230,7 +225,8 @@ export const ActiveChallengePage: React.FC = () => {
     } else {
       try {
         setSubmitting(true);
-        await workoutService.completeWorkout(currentStep.workoutId);
+        // await workoutService.completeChallenge(currentStep.workoutId);
+        await workoutService.completeChallenge(challengeId?.toString());
         alert('Поздравляем! Челлендж полностью выполнен и зафиксирован на сервере!');
         navigate('/challenges');
       } catch (err) {

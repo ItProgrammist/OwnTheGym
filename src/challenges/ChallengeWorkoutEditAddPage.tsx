@@ -32,7 +32,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
   const [isChooseModalOpen, setIsChooseModalOpen] = useState<boolean>(false);
   const [activeSet, setActiveSet] = useState<LocalExerciseSet | null>(null);
 
-  // Подгружаем существующие сеты тренировки, если мы в режиме редактирования
   const [sets, setSets] = useState<LocalExerciseSet[]>(
     routerState?.workout?.sets.map((s, index) => ({
       id: s.id || `set-${Date.now()}-${index}`,
@@ -47,7 +46,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
     setSets((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // ИСПРАВЛЕНО: Снята ошибка ts(2322) типизации аргумента модалки
   const handleAddNewExercises = (selectedExercises: any[]) => {
     const updatedSets: LocalExerciseSet[] = selectedExercises.map((ex, index) => ({
       id: `new-set-${Date.now()}-${index}`,
@@ -59,9 +57,7 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
     setSets((prev) => [...prev, ...updatedSets]);
   };
 
-  // ИСПРАВЛЕНО: Реальная сетевая отправка с принудительным сохранением type SPECIAL
   const handleSaveChanges = async () => {
-    // ЛОГ 1: Старт функции и проверка стейта
     console.log('%c=== [ЛОГ 1] КЛИК НА SAVE CHANGES ===', 'color: #3b82f6; font-weight: bold;');
     console.log('Текущее имя тренировки:', workoutName);
     console.log('Выбранная сложность:', difficulty);
@@ -82,7 +78,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
       amountOfTime: parseInt(String(s.time), 10) || 0
     }));
 
-    // ЛОГ 2: Проверяем, что прилетело в объект истории роутера (location.state)
     console.log('%c=== [ЛОГ 2] ПРОВЕРКА СОСТОЯНИЯ РОУТЕРА (state) ===', 'color: #a855f7; font-weight: bold;');
     console.log('Полный объект location.state:', location.state);
 
@@ -103,7 +98,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
     };
 
     try {
-      // ЛОГ 3: Отправка запроса на создание воркаута
       console.log('%c=== [ЛОГ 3] ОТПРАВКА POST /workouts ===', 'color: #eab308; font-weight: bold;');
       console.log('Тело запроса воркаута (payload):', JSON.stringify(payload, null, 2));
 
@@ -111,7 +105,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
 
       console.log('%cУспешно создан воркаут в базе! Сгенерированный ID:', 'color: #22c55e;', savedWorkout.id);
 
-      // ЛОГ 4: Проверка условий перед отправкой PUT-запроса челленджа
       console.log('%c=== [ЛОГ 4] ПРОВЕРКА ПЕРЕД ПРИВЯЗКОЙ К ЧЕЛЛЕНДЖУ ===', 'color: #f43f5e; font-weight: bold;');
       console.log('parentChallenge существует?:', !!parentChallenge);
       console.log('fromChallengeId существует?:', !!fromChallengeId);
@@ -131,7 +124,6 @@ export const ChallengeWorkoutEditAddPage: React.FC = () => {
           workoutIds: finalWorkoutIds
         };
 
-        // ЛОГ 5: Финальный JSON-пакет для PUT-запроса челленджа
         console.log('%c=== [ЛОГ 5] СЕТЕВОЙ ЗАПРОС PUT /challenges/{id} ===', 'color: #22c55e; font-weight: bold;');
         console.log(`URL: /challenges/${fromChallengeId}`);
         console.log('Тело запроса челленджа (challengePayload):', JSON.stringify(challengePayload, null, 2));

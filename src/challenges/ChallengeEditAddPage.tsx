@@ -13,12 +13,10 @@ export const ChallengeEditAddPage: React.FC = () => {
     const location = useLocation();
     const routerState = location.state as { challenge?: ChallengeItem };
 
-    // Текстовые поля формы
     const [title, setTitle] = useState<string>(routerState?.challenge?.title || '');
     const [description, setDescription] = useState<string>(routerState?.challenge?.description || '');
     const [imageUrl, setImageUrl] = useState<string>(routerState?.challenge?.imageUrl || '');
 
-    // Списки SPECIAL-тренировок
     const [availableSpecialWorkouts, setAvailableSpecialWorkouts] = useState<WorkoutItem[]>([]);
     const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<string[]>(
         routerState?.challenge?.workouts?.map((w) => w.id) || []
@@ -38,7 +36,6 @@ export const ChallengeEditAddPage: React.FC = () => {
             // Намертво фиксируем массив со всеми старыми и новой тренировкой в стейт чекбоксов
             setSelectedWorkoutIds(returnedChallengeData.workoutIds || []);
 
-            // Очищаем state истории, чтобы при ручном обновлении страницы (F5) данные не дублировались
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -66,16 +63,14 @@ export const ChallengeEditAddPage: React.FC = () => {
     };
 
     const handleCreateNewSpecialWorkout = () => {
-        // Сохраняем слепок челленджа, чтобы страница воркаута его запомнила
         const currentChallengeSnapshot = {
             id: challengeId,
             title: title.trim(),
             description: description.trim(),
             imageUrl: imageUrl.trim(),
-            workoutIds: selectedWorkoutIds // Все ID, которые уже отмечены чекбоксами
+            workoutIds: selectedWorkoutIds
         };
 
-        // Перенаправляем на ОФИЦИАЛЬНУЮ страницу конструктора воркаутов, передавая слепок в state
         navigate('/workouts/new/edit', {
             state: {
                 forcedType: 'SPECIAL',
@@ -86,7 +81,7 @@ export const ChallengeEditAddPage: React.FC = () => {
 
 
 
-    // ОТПРАВКА ДАННЫХ НА БЭКЕНД
+    // отправляем на бэк
     const handleSaveChallenge = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -95,18 +90,16 @@ export const ChallengeEditAddPage: React.FC = () => {
             return;
         }
 
-        // Собираем массив объектов тренировок для совместимости с Hibernate/JPA DTO
         const formattedWorkouts = selectedWorkoutIds.map((id) => ({ id }));
 
         const payload = {
             title: title.trim(),
             description: description.trim(),
             imageUrl: imageUrl.trim() || 'string',
-            workouts: formattedWorkouts, // Массив объектов [{id: "uuid"}]
-            workoutIds: selectedWorkoutIds // Дублируем как плоский массив для надежности
+            workouts: formattedWorkouts,
+            workoutIds: selectedWorkoutIds
         };
 
-        // ВЫВОДИМ ПОЛНЫЙ JSON В КОНСОЛЬ ПЕРЕД ОТПРАВКОЙ
         console.log('=== [ЧЕЛЛЕНДЖ] ОТПРАВКА PAYLOAD НА БЭКЕНД ===');
         console.log(JSON.stringify(payload, null, 2));
         console.log('============================================');
@@ -114,7 +107,6 @@ export const ChallengeEditAddPage: React.FC = () => {
         try {
             setSubmitting(true);
 
-            // ИСПРАВЛЕНО: Строгая проверка на создание новой записи по значению 'new' или отсутствию ID
             if (challengeId === 'new' || !challengeId) {
                 console.log('Вызов: POST /challenges');
                 await workoutService.createChallenge(payload);

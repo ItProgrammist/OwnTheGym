@@ -52,14 +52,14 @@ export interface ChallengeItem {
     title: string;
     description: string;
     imageUrl: string;
-    workouts: WorkoutItem[]; // Вложенный массив тренировок типа SPECIAL
+    workouts: WorkoutItem[];
 }
 
 export interface ChallengeCreateUpdatePayload {
     title: string;
     description: string;
     imageUrl: string;
-    workoutIds: string[]; // Бэкенд обычно ожидает массив ID привязанных тренировок
+    workoutIds: string[];
 }
 
 export interface StatWorkoutInfo {
@@ -75,7 +75,7 @@ export interface StatChallengeInfo {
 
 export interface StatEntryItem {
     id: string;
-    day: string; // ISO дата выполнения
+    day: string;
     type: 'WORKOUT' | 'CHALLENGE';
     workout: StatWorkoutInfo | null;
     challenge: StatChallengeInfo | null;
@@ -88,7 +88,7 @@ export interface StatisticsResponse {
 }
 
 interface LocalCalendarEntry {
-    day: string; // Формат даты "YYYY-MM-DD"
+    day: string;
     type: 'WORKOUT' | 'CHALLENGE';
 }
 
@@ -98,42 +98,42 @@ interface CalendarWeekResponse {
     month: number | null;
     startDate: string;
     endDate: string;
-    entries: LocalCalendarEntry[]; // Использует объявленный выше тип без конфликтов
+    entries: LocalCalendarEntry[];
 }
 
 interface DayColumn {
-    label: string;      // S, M, T, W, T, F, S
-    dateStr: string;    // "2026-06-22"
-    dayNumber: number;  // 22
+    label: string;
+    dateStr: string;
+    dayNumber: number;
 }
 
+
 export const workoutService = {
-    // Получить все тренировки типа TYPICAL (обычные)
+
     getTypicalWorkouts: async () => {
         const response = await api.get<WorkoutItem[]>('/workouts/typical');
         return response.data;
     },
 
-    // Получить конкретную тренировку по ID
+
     getWorkoutById: async (id: string) => {
         const response = await api.get<WorkoutItem>(`/workouts/${id}`);
         return response.data;
     },
 
-    // Создать тренировку
+
     createWorkout: async (payload: WorkoutCreateUpdatePayload) => {
         const response = await api.post<WorkoutItem>('/workouts', payload);
         return response.data;
     },
 
-    // Редактировать тренировку
+
     updateWorkout: async (id: string, payload: WorkoutCreateUpdatePayload) => {
-        // Строго шлем PUT запрос на /workouts/{id} по вашей схеме Swagger
         const response = await api.put<WorkoutItem>(`/workouts/${id}`, payload);
         return response.data;
     },
 
-    // Удалить тренировку
+
     deleteWorkout: async (id: string) => {
         await api.delete(`/workouts/${id}`);
     },
@@ -143,37 +143,48 @@ export const workoutService = {
         return response.data;
     },
 
-    // 2. Получить конкретное упражнение по ID (если понадобится для деталей)
+
     getExerciseById: async (id: string) => {
         const response = await api.get<ExerciseResponse>(`/exercises/${id}`);
         return response.data;
     },
 
-    // POST /exercises — Создать новое упражнение
+
     createExercise: async (payload: ExerciseRequest) => {
         const response = await api.post<ExerciseResponse>('/exercises', payload);
         return response.data;
     },
 
-    // PUT /exercises/{id} — Обновить существующее упражнение
+
     updateExercise: async (id: string, payload: ExerciseRequest) => {
         const response = await api.put<ExerciseResponse>(`/exercises/${id}`, payload);
         return response.data;
     },
 
-    // DELETE /exercises/{id} — Удалить упражнение по ID
+
     deleteExercise: async (id: string) => {
         await api.delete(`/exercises/${id}`);
     },
 
     completeWorkout: async (id: string) => {
-        // Генерируем текущее время в строгом формате ISO, который ожидает бэкенд
+
         const payload = {
             day: new Date().toISOString()
         };
 
         console.log(`=== [ОТПРАВКА POST /workouts/${id}/complete] ===`, payload);
         const response = await api.post(`/workouts/${id}/complete`, payload);
+        return response.data;
+    },
+
+    completeChallenge: async (id: string) => {
+
+        const payload = {
+            day: new Date().toISOString()
+        };
+
+        console.log(`=== [ОТПРАВКА POST /challenges/${id}/complete] ===`, payload);
+        const response = await api.post(`/challenges/${id}/complete`, payload);
         return response.data;
     },
 
@@ -215,6 +226,11 @@ export const workoutService = {
     // GET /calendar/month?year=YYYY&month=M (Месяц от 1 до 12)
     getCalendarMonth: async (year: number, month: number) => {
         const response = await api.get<CalendarWeekResponse>(`/calendar/month?year=${year}&month=${month}`);
+        return response.data;
+    },
+
+    deleteChallenge: async (id: string) => {
+        const response = await api.delete(`/challenges/${id}`);
         return response.data;
     }
 };

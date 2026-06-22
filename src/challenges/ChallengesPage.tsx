@@ -20,9 +20,6 @@ export const ChallengesPage: React.FC = () => {
 
       const data = await workoutService.getAllChallenges();
 
-      // ==========================================================================
-      // КРИТИЧЕСКИЙ ЛОГ: Проверяем, что именно прислал бэкенд по сети
-      // ==========================================================================
       console.log('=== [ЧЕЛЛЕНДЖИ С БЭКЕНДА] ДАННЫЕ УСПЕШНО ПРИЛЕТЕЛИ ===');
       console.log('Тип данных:', typeof data);
       console.log('Является ли массивом:', Array.isArray(data));
@@ -82,7 +79,7 @@ export const ChallengesPage: React.FC = () => {
         {!loading && !error && challenges.length === 0 && (
           <div className="text-center text-secondary py-5">
             <p className="m-0">Глобальные челленджи пока отсутствуют на сервере.</p>
-            <span className="small"  style={{ color: 'grey' }}>Нажмите кнопку Add, чтобы создать первое испытание.</span>
+            <span className="small" style={{ color: 'grey' }}>Нажмите кнопку Add, чтобы создать первое испытание.</span>
           </div>
         )}
 
@@ -129,13 +126,13 @@ export const ChallengesPage: React.FC = () => {
                   {/* ДВЕ ИКОНКИ УПРАВЛЕНИЯ В ПРАВОМ УГЛУ ПЛАШКИ */}
                   <div className="col-auto d-flex align-items-center gap-2 pe-1">
 
-                    {/* ИСПРАВЛЕНО: Карандаш редактирования для каждого челленджа */}
+                    {/* КАРАНДАШ: Редактировать челлендж */}
                     <button
                       type="button"
                       className="btn p-2 d-flex align-items-center justify-content-center border-0"
                       style={{ width: '2.25rem', height: '2.25rem', backgroundColor: 'rgba(37, 99, 235, 0.2)', borderRadius: '0.5rem', color: '#3b82f6' }}
                       onClick={(e) => {
-                        e.stopPropagation(); // Изолируем клик, чтобы не открывался просмотр SingleChallengePage
+                        e.stopPropagation(); // Не даем открыться просмотру челленджа
                         navigate(`/challenges/${challenge.id}/edit`, { state: { challenge } });
                       }}
                       title="Редактировать челлендж"
@@ -145,14 +142,54 @@ export const ChallengesPage: React.FC = () => {
                       </svg>
                     </button>
 
+                    {/* ИСПРАВЛЕНО: Кнопка удаления челленджа (Красная корзина) */}
+                    <button
+                      type="button"
+                      className="btn p-2 d-flex align-items-center justify-content-center border-0"
+                      style={{ width: '2.25rem', height: '2.25rem', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '0.5rem', color: '#ef4444' }}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+
+                        if (window.confirm(`Вы уверены, что хотите навсегда удалить челлендж "${challenge.title}"?`)) {
+                          try {
+                            console.log(`[ФРОНТЕНД] Отправка DELETE /challenges/${challenge.id}`);
+                            await workoutService.deleteChallenge(challenge.id);
+
+                            setChallenges((prev) => prev.filter((c) => c.id !== challenge.id));
+                            console.log('Челлендж успешно удален!');
+                          } catch (err: unknown) {
+                            // ТИТАНОВЫЙ ЛОГ: Выводим в консоль точный ответ сервера
+                            console.error('%c=== ОШИБКА УДАЛЕНИЯ ЧЕЛЛЕНДЖА ===', 'color: #ef4444; font-weight: bold;', err);
+
+                            if (axios.isAxiosError(err)) {
+                              console.log('Статус ответа бэка:', err.response?.status); // Например, 400, 405 или 500
+                              console.log('Детали ошибки от Spring Boot (Data):', err.response?.data);
+
+                              const serverMessage = err.response?.data?.message || err.response?.data?.error;
+                              alert(`Не удалось удалить: ${serverMessage || 'Ошибка формата запроса'}`);
+                            } else {
+                              alert('Произошла непредвиденная ошибка сети.');
+                            }
+                          }
+                        }
+                      }}
+
+                      title="Удалить челлендж"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" style={{ width: '1.15rem', height: '1.15rem' }}>
+                        <path d="M19 7l-.8 13.1c-.1 1.1-.9 1.9-2 1.9H7.8c-1.1 0-1.9-.8-2-1.9L5 7m5 4v6m4-6v6M1 7h22M8 7V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+
                     {/* Шеврон перехода на SingleChallengePage */}
-                    <div className="text-secondary">
+                    <div className="text-secondary ms-1">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '1.25rem' }}>
                         <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
 
                   </div>
+
 
                 </div>
               </div>

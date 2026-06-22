@@ -16,7 +16,6 @@ export const SingleChallengePage: React.FC = () => {
     const [challenge, setChallenge] = useState<ChallengeItem | null>(routerState?.challenge || null);
     const [loading, setLoading] = useState<boolean>(!challenge);
 
-    // Подтягиваем свежие данные челленджа с бэка при F5 или отсутствии state
     useEffect(() => {
         if (challengeId && !routerState?.challenge) {
             setLoading(true);
@@ -30,7 +29,6 @@ export const SingleChallengePage: React.FC = () => {
         }
     }, [challengeId, routerState]);
 
-    // Удаление воркаута ИМЕННО из этого челленджа (Обновление массива на бэке)
     const handleDeleteWorkoutFromChallenge = async (workoutId: string) => {
         if (!challenge || !challengeId || !window.confirm('Отвязать эту тренировку от челленджа?')) return;
 
@@ -69,19 +67,16 @@ export const SingleChallengePage: React.FC = () => {
                         className="btn btn-success d-flex align-items-center gap-2 fw-semibold px-3 py-2 border-0 shadow-sm"
                         style={{ backgroundColor: '#22c55e', borderRadius: '0.75rem' }}
                         onClick={() => {
-                            // Собираем слепок текущего челленджа, чтобы конструктор воркаутов его запомнил
                             const currentChallengeSnapshot = {
                                 id: challengeId,
                                 title: challenge.title,
                                 description: challenge.description,
                                 imageUrl: challenge.imageUrl,
-                                // Запоминаем ID всех тренировок, которые СЕЙЧАС уже привязаны к этому челленджу
                                 workoutIds: challenge.workouts?.map(w => w.id) || []
                             };
 
                             console.log('Переходим в конструктор, передаем контекст челленджа:', currentChallengeSnapshot);
 
-                            // Перенаправляем в конструктор, передавая слепок в parentChallenge
                             navigate('/workouts/new/edit', {
                                 state: {
                                     forcedType: 'SPECIAL',
@@ -149,12 +144,10 @@ export const SingleChallengePage: React.FC = () => {
                                         </button>
 
                                         {/* Синий карандаш редактирования самого SPECIAL воркаута */}
-                                        {/* Синий карандаш редактирования самого SPECIAL воркаута */}
                                         <button
                                             type="button"
                                             className="btn p-0 border-0 bg-transparent"
                                             onClick={() => {
-                                                // Собираем слепок челленджа, чтобы конструктор воркаутов ПОМНИЛ его при редактировании
                                                 const currentChallengeSnapshot = {
                                                     id: challengeId,
                                                     title: challenge.title,
@@ -163,7 +156,6 @@ export const SingleChallengePage: React.FC = () => {
                                                     workoutIds: challenge.workouts?.map(w => w.id) || []
                                                 };
 
-                                                // Переходим в режим редактирования конкретного воркаута, передавая контекст челленджа
                                                 navigate(`/workouts/${item.id}/edit`, {
                                                     state: {
                                                         workout: item,
@@ -195,7 +187,6 @@ export const SingleChallengePage: React.FC = () => {
                         style={{ backgroundColor: '#2563eb', marginTop: '1rem', marginBottom: '4rem' }}
                         onClick={() => {
                             console.log('Запуск челленджа! Передаем объект:', challenge);
-                            // ИСПРАВЛЕНО НА 100%: Переходим по роуту челленджа и прокидываем весь объект целиком
                             navigate(`/challenges/${challengeId}/active`, { state: { challenge } });
                         }}
                     >

@@ -7,7 +7,7 @@ import {
   type RouteObject 
 } from "react-router-dom";
 
-// Импорт страниц приложения
+
 import { MainPage } from './MainPage';
 import { Workouts } from './workouts/Workouts';
 import { WorkoutViewPage } from './workouts/WorkoutViewPage';
@@ -24,11 +24,11 @@ import { ActiveChallengePage } from './challenges/ActiveChallengePage';
 import { LoginPage } from './auth/LoginPage';
 import { RegisterPage } from './auth/RegisterPage';
 
-// ИСПРАВЛЕНО: Импортируем вынесенные компоненты из папки компонентов
+
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-// Импорт стилей Bootstrap
+
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
 const routes: RouteObject[] = [

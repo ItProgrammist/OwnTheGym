@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import styles from './scss/WorkoutViewPage.module.scss'; // Переиспользуем готовые стили просмотра
+import styles from './scss/WorkoutViewPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { workoutService, type ChallengeItem } from '../api/workoutService';
@@ -15,11 +15,9 @@ export const ChallengeViewPage: React.FC = () => {
   const [challenge, setChallenge] = useState<ChallengeItem | null>(routerState?.challenge || null);
   const [loading, setLoading] = useState<boolean>(!challenge);
 
-  // Если обновили страницу (F5), подтягиваем данные этого челленджа с бэка заново
   useEffect(() => {
     if (challengeId && !routerState?.challenge) {
       setLoading(true);
-      // Предполагается метод getChallengeById, если его нет — можно перезапросить все и отфильтровать
       workoutService.getAllChallenges()
         .then((list) => {
           const found = list.find(c => c.id === challengeId);

@@ -27,7 +27,6 @@ export const EditChallengeWorkoutModal: React.FC<EditChallengeWorkoutModalProps>
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard' | 'Insane' | ''>(workout ? workout.difficulty : '');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // Дополнительный предохранитель: если модалка закрыта — ничего не рендерим
   if (!isOpen) return null;
 
   const handleSaveClick = () => {

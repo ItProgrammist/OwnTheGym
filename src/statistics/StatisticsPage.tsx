@@ -120,7 +120,7 @@ export const StatisticsPage: React.FC = () => {
           
           {/* ИСПРАВЛЕНО: Стартовая заглушка, когда изначально ничего не выбрано */}
           {activeFilter === null && (
-            <div className="text-center text-muted py-5 small">
+            <div className="text-center py-5 small" style={{ color: "grey" }}>
               Пожалуйста, выберите категорию (Workouts, Challenges или All Records) для отображения истории занятий.
             </div>
           )}

@@ -17,7 +17,6 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      // 1. Отправляем запрос авторизации по Email по схеме бэкенда
       const response = await api.post<LoginRegisterResponse>('/auth/login', {
         email: email.trim(),
         password
@@ -33,11 +32,9 @@ export const LoginPage: React.FC = () => {
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        // Извлекаем сообщение об ошибке, возвращенное бэкендом
         const serverData = err.response?.data as { message?: string; error?: string };
         const backendMessage = serverData?.message || serverData?.error;
 
-        // Валидированная русская интерпретация ответов сервера
         if (err.response?.status === 401 || err.response?.status === 404) {
           setError('Неверный Email или пароль. Пожалуйста, проверьте введённые данные.');
         } else if (backendMessage) {

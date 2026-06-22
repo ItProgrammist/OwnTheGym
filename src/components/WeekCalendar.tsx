@@ -15,12 +15,10 @@ export const WeekCalendar: React.FC = () => {
   const [entries, setEntries] = useState<CalendarEntryItem[]>([]);
   const [weekDays, setWeekDays] = useState<DayColumn[]>([]);
 
-  // 1. Генерируем дни актуальной текущей недели (от S до S)
   useEffect(() => {
     const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     const current = new Date();
     
-    // Находим воскресенье текущей недели (в американском стиле вашего макета)
     const sunday = new Date(current);
     sunday.setDate(current.getDate() - current.getDay());
 
@@ -43,7 +41,6 @@ export const WeekCalendar: React.FC = () => {
     setWeekDays(days);
   }, []);
 
-  // 2. Получаем логи выполненных занятий с бэкенда (порт 5050)
   useEffect(() => {
     workoutService.getCalendarWeek()
       .then((res) => {
@@ -73,10 +70,8 @@ export const WeekCalendar: React.FC = () => {
       {/* Основная плашка календаря из макета */}
       <div className="row g-0 w-100 py-3 rounded-4 px-2" style={{ backgroundColor: '#2d2d2d' }}>
         {weekDays.map((day) => {
-          // Ищем все записи, сделанные в этот конкретный день недели
           const dayRecords = entries.filter((e) => e.day === day.dateStr);
           
-          // Проверяем наличие выполненных активностей
           const hasChallenge = dayRecords.some((e) => e.type === 'CHALLENGE');
           const hasWorkout = dayRecords.some((e) => e.type === 'WORKOUT');
 

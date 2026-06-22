@@ -27,10 +27,10 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({ isOpen, onClose })
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // Вычисляем, с какого дня недели начинается текущий месяц (чтобы сдвинуть числа на свои места)
+  
   const getFirstDayOfWeek = (month: number, year: number) => {
     const day = new Date(year, month, 1).getDay();
-    return day === 0 ? 6 : day - 1; // Корректируем, чтобы неделя начиналась с Понедельника (0 - Пн, 6 - Вс)
+    return day === 0 ? 6 : day - 1;
   };
 
   const totalDays = getDaysInMonth(selectedMonth, selectedYear);
@@ -104,10 +104,8 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* ГОРИЗОНТАЛЬНАЯ СЕТКА ЧИСЕЛ МЕСЯЦА */}
-        {/* Принудительно включаем flex-wrap строки, чтобы элементы переносились ровно по 7 штук */}
         <div className="row g-0 text-center d-flex flex-row flex-wrap justify-content-start align-items-center">
           
-          {/* Рендерим пустые ячейки для сдвига дат на правильный день недели */}
           {emptyCells.map((val) => (
             <div key={`empty-${val}`} className="d-flex justify-content-center align-items-center mb-3" style={{ width: '14.28%', flex: '0 0 14.28%' }}>
               <div className={styles['calendar-day-circle-empty']}></div>
