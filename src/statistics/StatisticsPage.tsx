@@ -1,128 +1,185 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import styles from './scss/StatisticsPage.module.scss';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { workoutService, type StatEntryItem, type StatisticsResponse } from '../api/workoutService';
 
-interface HistoryItem {
-  id: string;
-  title: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane';
-  date: string;
-  imageUrl: string;
-}
+type FilterType = 'ALL' | 'WORKOUT' | 'CHALLENGE' | null;
 
 export const StatisticsPage: React.FC = () => {
-  // Статистические счетчики сверху
-  const stats = {
-    workoutsCount: 4,
-    challengesCount: 1
-  };
+  const [statsData, setStatsData] = useState<StatisticsResponse | null>(null);
+  
+  // ИСПРАВЛЕНО: Изначально фильтр равен null, чтобы на экране ничего не выводилось до выбора
+  const [activeFilter, setActiveFilter] = useState<FilterType>(null);
+  
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Лента выполненных тренировок из истории
-  const historyLog: HistoryItem[] = [
-    {
-      id: 'log-1',
-      title: 'Chest Mission',
-      difficulty: 'Hard',
-      date: '17.06.2026, 23:17',
-      imageUrl: 'https://unsplash.com',
-    },
-    {
-      id: 'log-2',
-      title: 'Arms Killer',
-      difficulty: 'Medium',
-      date: '15.06.2026, 20:35',
-      imageUrl: 'https://unsplash.com',
-    },
-    {
-      id: 'log-3',
-      title: 'Leg Armageddon',
-      difficulty: 'Insane',
-      date: '14.06.2026, 22:11',
-      imageUrl: 'https://unsplash.com',
-    },
-  ];
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await workoutService.getStatistics();
+        setStatsData(data);
+      } catch (err: unknown) {
+        console.error('Ошибка при загрузке статистики:', err);
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || 'Не удалось загрузить данные статистики.');
+        } else {
+          setError('Произошла ошибка при связи с сервером.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStats();
+  }, []);
 
-  const getDifficultyClass = (diff: 'Easy' | 'Medium' | 'Hard' | 'Insane') => {
-    if (diff === 'Medium') return styles['history-row__difficulty--medium'];
-    if (diff === 'Hard') return styles['history-row__difficulty--hard'];
-    return styles['history-row__difficulty--insane'];
+  if (loading) return <div className="text-center text-white mt-5">Загрузка логов истории...</div>;
+  if (error) return <div className="alert alert-danger mx-auto mt-5 text-center" style={{ maxWidth: '500px' }}>{error}</div>;
+
+  const workoutCount = statsData?.workoutDaysCount ?? 0;
+  const challengeCount = statsData?.challengeDaysCount ?? 0;
+  const allEntries = statsData?.entries || [];
+
+  // ИСПРАВЛЕНО: Если фильтр равен null, массив отфильтрованных записей гарантированно пуст
+  const filteredEntries = allEntries.filter((entry) => {
+    if (activeFilter === null) return false;
+    if (activeFilter === 'ALL') return true;
+    return entry.type === activeFilter;
+  });
+
+  const formatDateString = (isoString: string): string => {
+    if (!isoString) return '';
+    try {
+      const date = new Date(isoString);
+      return new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch {
+      return isoString;
+    }
   };
 
   return (
-    <div className={styles['stats-page']}>
-      <div className={styles['stats-page__content']}>
-        
-        {/* Кликабельный глобальный логотип */}
+    <div className={`${styles['statistics-page']} text-white min-vh-100 d-flex flex-column`} style={{ backgroundColor: '#1a1a1a', fontFamily: 'sans-serif' }}>
+      <div className="container flex-grow-1 py-4 px-3 d-flex flex-column align-items-center" style={{ maxWidth: '640px' }}>
         <Header />
 
-        {/* Заголовок секции статистики с линком справа */}
-        <div className="row g-0 align-items-center justify-content-between mb-4 px-1">
-          <div className="col-auto">
-            <h2 className={styles['stats-page__title']}>Statistics</h2>
-          </div>
-          <div className="col-auto">
-            <button className={styles['stats-page__records-btn']}>
-              All Records
-            </button>
-          </div>
+        {/* ПАНЕЛЬ ЗАГОЛОВКА И КНОПКА ALL RECORDS */}
+        <div className="d-flex align-items-center justify-content-between mb-4 mt-2 w-100 px-1">
+          <h2 className="fs-3 fw-bold m-0 text-white">Statistics</h2>
+          <button 
+            type="button" 
+            className="btn btn-link p-0 border-0 text-decoration-none fw-bold"
+            style={{ color: activeFilter === 'ALL' ? '#3b82f6' : '#9ca3af', fontSize: '0.95rem' }}
+            onClick={() => setActiveFilter('ALL')}
+          >
+            All Records
+          </button>
         </div>
 
-        {/* Секция счетчиков-индикаторов выполненной активности */}
-        <div className="row g-0 justify-content-center text-center mb-4">
-          {/* Блок Workouts */}
-          <div className="col-5 col-sm-4 d-flex flex-column align-items-center">
-            <span className={styles['stats-page__counter-label']}>Workouts</span>
-            <span className={styles['stats-page__counter-value']}>{stats.workoutsCount}</span>
-          </div>
-
-          {/* Блок Challenges */}
-          <div className="col-5 col-sm-4 d-flex flex-column align-items-center">
-            <span className={styles['stats-page__counter-label']}>Challenges</span>
-            <span className={styles['stats-page__counter-value']}>{stats.challengesCount}</span>
-          </div>
-        </div>
-
-        {/* Список завершенных тренировок (Лог истории) */}
-        <div className="d-flex flex-column gap-3">
-          {historyLog.map((log) => (
-            <div key={log.id} className={styles['history-row']}>
-              <div className="row g-0 align-items-center w-full h-100">
-                
-                {/* Изображение тренировки */}
-                <div className="col-auto h-100">
-                  <div className={styles['history-row__image-wrapper']}>
-                    <img src={log.imageUrl} alt={log.title} />
-                  </div>
-                </div>
-
-                {/* Основное инфо: Название + Сложность */}
-                <div className="col ps-3 d-flex flex-column justify-content-center">
-                  <h3 className={styles['history-row__title']}>{log.title}</h3>
-                  <p className={styles['history-row__difficulty-label']}>
-                    Difficulty:{' '}
-                    <span className={getDifficultyClass(log.difficulty)}>
-                      {log.difficulty}
-                    </span>
-                  </p>
-                </div>
-
-                {/* Штамп даты и времени завершения справа */}
-                <div className="col-auto pe-3 align-self-end pb-3">
-                  <span className={styles['history-row__date']}>
-                    {log.date}
-                  </span>
-                </div>
-
-              </div>
+        {/* ПАНЕЛЬ С КЛИКАБЕЛЬНЫМИ СЧЕТЧИКАМИ */}
+        <div className="row g-0 w-100 text-center mb-4 px-1 py-2 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
+          <div 
+            className="col-6 text-center" 
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveFilter('WORKOUT')}
+          >
+            <div className="small fw-bold text-uppercase tracking-wider mb-1" style={{ color: activeFilter === 'WORKOUT' ? '#3b82f6' : '#9ca3af' }}>
+              Workouts
             </div>
-          ))}
+            <div className="fs-3 fw-bold" style={{ color: activeFilter === 'WORKOUT' ? '#3b82f6' : '#ffffff' }}>
+              {workoutCount}
+            </div>
+          </div>
+
+          <div 
+            className="col-6 text-center" 
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveFilter('CHALLENGE')}
+          >
+            <div className="small fw-bold text-uppercase tracking-wider mb-1" style={{ color: activeFilter === 'CHALLENGE' ? '#3b82f6' : '#9ca3af' }}>
+              Challenges
+            </div>
+            <div className="fs-3 fw-bold" style={{ color: activeFilter === 'CHALLENGE' ? '#3b82f6' : '#ffffff' }}>
+              {challengeCount}
+            </div>
+          </div>
+        </div>
+
+        {/* СПИСОК ВЫПОЛНЕННЫХ ПЛАШЕК ИСТОРИИ */}
+        <div className="d-flex flex-column gap-3 w-100 mb-5">
+          
+          {/* ИСПРАВЛЕНО: Стартовая заглушка, когда изначально ничего не выбрано */}
+          {activeFilter === null && (
+            <div className="text-center text-muted py-5 small">
+              Пожалуйста, выберите категорию (Workouts, Challenges или All Records) для отображения истории занятий.
+            </div>
+          )}
+
+          {/* Заглушка, если категория выбрана, но записей в ней нет */}
+          {activeFilter !== null && filteredEntries.length === 0 && (
+            <div className="text-center text-secondary py-5">
+              В данной категории пока нет выполненных записей на сервере.
+            </div>
+          )}
+
+          {/* Отрисовка списка карточек */}
+          {activeFilter !== null && filteredEntries.map((item) => {
+            if (!item) return null;
+
+            const isWorkout = item.type === 'WORKOUT';
+            const displayTitle = isWorkout ? item.workout?.title : item.challenge?.title;
+            const displayLevel = isWorkout ? item.workout?.level || 'MEDIUM' : 'CHALLENGE';
+
+            let levelColor = '#eab308'; 
+            if (displayLevel === 'HARD' || displayLevel === 'INSANE') levelColor = '#ef4444'; 
+
+            return (
+              <div 
+                key={item.id} 
+                className="card border-0 rounded-4 overflow-hidden text-white shadow-sm w-100"
+                style={{ backgroundColor: '#2d2d2d', height: '5.5rem' }}
+              >
+                <div className="row g-0 align-items-center h-100 w-100 px-3">
+                  
+                  <div className="col-auto h-100 d-flex align-items-center">
+                    <div className="rounded-3 overflow-hidden bg-black d-flex align-items-center justify-content-center" style={{ width: '4.5rem', height: '3.75rem' }}>
+                      <img src="/placeholder.png" alt="Finished" className="w-100 h-100 object-fit-cover" />
+                    </div>
+                  </div>
+
+                  <div className="col ps-3 d-flex flex-column justify-content-center text-start">
+                    <h3 className="fs-5 fw-bold mb-1 text-white text-truncate" style={{ maxWidth: '280px' }}>
+                      {displayTitle || 'Выполненное занятие'}
+                    </h3>
+                    
+                    <span className="small text-muted" style={{ fontSize: '12px' }}>
+                      Difficulty: <strong style={{ color: levelColor }}>{displayLevel}</strong>
+                    </span>
+                  </div>
+
+                  <div className="col-auto pe-1 text-end d-flex align-items-center h-100">
+                    <span className="text-secondary" style={{ fontSize: '11px', color: '#888888' }}>
+                      {formatDateString(item.day)}
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>
-
-      {/* Глобальный интерактивный таб-бар */}
       <Footer />
     </div>
   );

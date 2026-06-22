@@ -193,7 +193,11 @@ export const SingleChallengePage: React.FC = () => {
                         type="button"
                         className="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-5 border-0 text-white shadow"
                         style={{ backgroundColor: '#2563eb', marginTop: '1rem', marginBottom: '4rem' }}
-                        onClick={() => navigate(`/workouts/${challenge.workouts[0].id}/active`, { state: { workout: challenge.workouts[0] } })}
+                        onClick={() => {
+                            console.log('Запуск челленджа! Передаем объект:', challenge);
+                            // ИСПРАВЛЕНО НА 100%: Переходим по роуту челленджа и прокидываем весь объект целиком
+                            navigate(`/challenges/${challengeId}/active`, { state: { challenge } });
+                        }}
                     >
                         Start Challenge
                     </button>
