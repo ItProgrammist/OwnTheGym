@@ -5,7 +5,7 @@ import axios from 'axios';
 // Если прокси не подхватился, браузер отправит запрос на /auth относительно фронтенда,
 // что позволит Vite перехватить его.
 export const api = axios.create({
-  baseURL: '', 
+  baseURL: 'https://ownthegymapi.onrender.com/', 
   headers: {
     'Content-Type': 'application/json',
   },
